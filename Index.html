@@ -331,46 +331,51 @@
 
   <!-- RIGHT: CARD PREVIEW -->
   <div class="preview-panel">
-    <div class="dokkan-card">
+    <div class="export-buttons">
+    <button id="exportPngBtn">Export current form as PNG</button>
+  </div>
 
-      <!-- HEADER -->
-      <div class="card-header">
-        <div class="header-title" id="titleMain">Goddess of Lowee</div>
-        <div class="header-subtitle" id="titleSub">Blanc</div>
-      </div>
+  <!-- Scrollable area with the card -->
+  <div class="preview-inner">
+    <div class="dokkan-card" id="dokkanCard">
 
-      <!-- TOP INFO BAR -->
-      <div class="card-subheader">
-        <div>Max Lv <span id="maxLv">120</span></div>
-        <div>SA Lv <span id="saLv">10</span></div>
-        <div>
-          <span id="rarity">UR</span>
-          <img id="rarityIcon" class="rarity-icon" src="img/UR.png" alt="UR">
+        <!-- HEADER -->
+        <div class="card-header">
+          <div class="header-title" id="titleMain">Goddess of Lowee</div>
+          <div class="header-subtitle" id="titleSub">Blanc</div>
         </div>
-        <div>
-          <span id="type">Super AGL</span>
-          <img id="typeIcon" class="type-icon"
-               src="img/super-agl.png"
-               alt="Super AGL">
-        </div>
-        <div>Cost <span id="cost">58</span></div>
-        <div>Links <span id="linksSmall">TBA</span></div>
-      </div>
 
-      <!-- BODY -->
-      <div class="card-body">
-        <!-- ART -->
-        <div class="card-art">
-          <img id="cardArtImg"
-               data-form="base"
-               src="https://via.placeholder.com/240x320.png?text=Base+Art"
-               alt="base art">
-        
-          <img id="cardArtImgTrans"
-               data-form="transformed"
-               src="https://via.placeholder.com/240x320.png?text=Transformed+Art"
-               alt="transformed art">
+        <!-- TOP INFO BAR -->
+        <div class="card-subheader">
+          <div>Max Lv <span id="maxLv">120</span></div>
+          <div>SA Lv <span id="saLv">10</span></div>
+          <div>
+            <span id="rarity">UR</span>
+            <img id="rarityIcon" class="rarity-icon" src="img/UR.png" alt="UR">
+          </div>
+          <div>
+            <span id="type">Super AGL</span>
+            <img id="typeIcon" class="type-icon"
+                 src="img/super-agl.png"
+                 alt="Super AGL">
+          </div>
+          <div>Cost <span id="cost">58</span></div>
+          <div>Links <span id="linksSmall">TBA</span></div>
         </div>
+
+        <!-- BODY -->
+        <div class="card-body">
+          <!-- ART -->
+          <div class="card-art">
+            <img id="cardArtImg"
+                 data-form="base"
+                 src="https://via.placeholder.com/240x320.png?text=Base+Art"
+                 alt="base art">
+            <img id="cardArtImgTrans"
+                 data-form="transformed"
+                 src="https://via.placeholder.com/240x320.png?text=Transformed+Art"
+                 alt="transformed art">
+          </div>
 
         <!-- INFO BOXES -->
         <div class="card-info">
@@ -489,15 +494,9 @@
           </tr>
         </table>
       </div>
-
-    </div>
-
-  </div>
-    <div class="export-buttons">
-      <button id="exportPngBtn">Export current form as PNG</button>
-    </div>
-
-</div>
+    </div> <!-- end .dokkan-card -->
+  </div> <!-- .preview-inner -->
+</div> <!-- .preview-panel -->
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="script.js"></script>

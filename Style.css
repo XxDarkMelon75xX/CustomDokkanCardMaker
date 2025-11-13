@@ -40,12 +40,20 @@ body {
 .preview-panel {
   flex: 1;
   display: flex;
+  flex-direction: column;   /* stack button on top, card below */
+  align-items: center;
+}
+
+/* scroll only the card area */
+.preview-inner {
+  flex: 1;
+  display: flex;
   justify-content: center;
   align-items: flex-start;
-
-  max-height: 100%;      /* fill available height */
-  overflow-y: auto;      /* ✅ right side scrolls if card is tall */
-  overflow-x: hidden;    /* no horizontal scroll needed */
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .link-line,
@@ -181,7 +189,7 @@ textarea {
 /* Dokkan-like card */
 .dokkan-card {
   width: 900px;
-  transform: scale(1.2);
+  transform: scale(1.1);
   transform-origin: top left;
   background: #f0f8ff;
   border: 4px solid var(--main-color, #159fd8);
@@ -442,25 +450,29 @@ section h3 span {
   --main-color: #ffc02d;
 }
 
+/* Position the button above the card, centered, NOT inside the card */
 .export-buttons {
-  margin-top: 10px;
-  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 
 .export-buttons button {
-  padding: 6px 12px;
-  border-radius: 4px;
-  border: 1px solid #555;
+  padding: 6px 14px;
+  font-size: 12px;
   background: #3b82f6;
   color: #fff;
-  font-size: 12px;
+  border: 1px solid #1e40af;
+  border-radius: 4px;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .export-buttons button:hover {
   filter: brightness(1.1);
 }
-
 
 /* Responsive: stack on small screens */
 @media (max-width: 900px) {

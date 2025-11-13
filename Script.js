@@ -351,38 +351,32 @@ function slugify(str) {
 
 function setupExportButton() {
   const btn = document.getElementById("exportPngBtn");
-  const card = document.querySelector(".dokkan-card");
+  const card = document.getElementById("dokkanCard"); // ✅ just the card
 
   if (!btn || !card || typeof html2canvas === "undefined") return;
 
   btn.addEventListener("click", async () => {
-    // detect current form (base / transformed)
     const isTransformed = card.classList.contains("form-transformed");
     const modeLabel = isTransformed ? "transformed" : "base";
 
-    // Build a filename based on the title
     const titleMain = document.getElementById("titleMain")?.textContent || "card";
     const titleSub = document.getElementById("titleSub")?.textContent || "";
     const fullTitle = (titleMain + " " + titleSub).trim();
     const fileBase = slugify(fullTitle) || "card";
 
-    try {
-      const canvas = await html2canvas(card, {
-        backgroundColor: null, // keep transparent around card
-        scale: 2               // higher resolution
-      });
+    const canvas = await html2canvas(card, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true
+    });
 
-      const dataUrl = canvas.toDataURL("image/png");
-      const link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = `${fileBase}_${modeLabel}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error("Export failed:", err);
-      alert("PNG export failed. Check the console for details.");
-    }
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = `${fileBase}_${modeLabel}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   });
 }
 
