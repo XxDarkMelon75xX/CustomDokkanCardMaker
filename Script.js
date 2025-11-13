@@ -262,37 +262,59 @@ function setupFormToggle() {
   const card = document.querySelector(".dokkan-card");
   const formRoot = document.querySelector(".creator-panel");
   const radios = document.querySelectorAll('input[name="formMode"]');
+  const transformCheckbox = document.getElementById("hasTransform");
+  const toggleGroup = document.getElementById("formToggleGroup");
 
-  if (!card || !formRoot || !radios.length) return;
+  if (!card || !formRoot || !radios.length || !transformCheckbox) return;
 
-  const update = () => {
-    const checked = Array.from(radios).find(r => r.checked);
-    const mode = checked ? checked.value : "base"; // "base" or "transformed"
+  const apply = () => {
+    const enabled = transformCheckbox.checked;
 
-    // --- Preview card toggle ---
-    if (mode === "transformed") {
+    // Show/hide the "Form preview" fieldset
+    if (toggleGroup) {
+      toggleGroup.style.display = enabled ? "" : "none";
+    }
+
+    // Determine which mode is active
+    let mode = "base";
+
+    if (enabled) {
+      const checked = Array.from(radios).find(r => r.checked) || radios[0];
+      if (checked) {
+        mode = checked.value;
+      }
+    } else {
+      // force base when transformation is disabled
+      radios.forEach(radio => {
+        radio.checked = (radio.value === "base");
+      });
+    }
+
+    // --- PREVIEW: base vs transformed ---
+    if (enabled && mode === "transformed") {
       card.classList.add("form-transformed");
     } else {
       card.classList.remove("form-transformed");
     }
 
-    // --- Form toggle (left panel) ---
+    // --- FORM: show base/transformed blocks ---
     formRoot.querySelectorAll('[data-form="base"]').forEach(el => {
-      el.style.display = mode === "base" ? "" : "none";
+      // base fields are always visible when transformation is disabled,
+      // or when mode === "base"
+      el.style.display = (!enabled || mode === "base") ? "" : "none";
     });
 
     formRoot.querySelectorAll('[data-form="transformed"]').forEach(el => {
-      el.style.display = mode === "transformed" ? "" : "none";
+      // transformed fields only when transformation is enabled AND mode === "transformed"
+      el.style.display = (enabled && mode === "transformed") ? "" : "none";
     });
   };
 
-  radios.forEach(radio => {
-    radio.addEventListener("change", update);
-  });
+  radios.forEach(r => r.addEventListener("change", apply));
+  transformCheckbox.addEventListener("change", apply);
 
-  update(); // initial state
+  apply(); // initial state
 }
-
 
 // Insert helper tags into the active textarea/input
 document.querySelectorAll(".helper-tags button").forEach(btn => {
