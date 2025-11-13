@@ -442,6 +442,25 @@ section h3 span {
   --main-color: #ffc02d;
 }
 
+.export-buttons {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.export-buttons button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.export-buttons button:hover {
+  filter: brightness(1.1);
+}
+
 
 /* Responsive: stack on small screens */
 @media (max-width: 900px) {
