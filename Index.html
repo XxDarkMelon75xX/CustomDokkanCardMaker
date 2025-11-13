@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dokkan Card Creator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+
+  <!-- LEFT: FORM -->
+  <div class="creator-panel">
+    <h1>Dokkan Card Creator</h1>
+    <form id="cardForm">
+      
+      <fieldset>
+        <legend>General</legend>
+        <label>
+          Title line 1:
+          <input type="text" data-bind="titleMain" value="Goddess of Lowee">
+        </label>
+        <label>
+          Title line 2:
+          <input type="text" data-bind="titleSub" value="Blanc">
+        </label>
+        <label>
+          Type:
+          <select id="typeSelect" data-bind="type">
+            <option value="SUPER_AGL" selected>Super AGL</option>
+            <option value="EXTREME_AGL">Extreme AGL</option>
+          
+            <option value="SUPER_STR">Super STR</option>
+            <option value="EXTREME_STR">Extreme STR</option>
+          
+            <option value="SUPER_TEQ">Super TEQ</option>
+            <option value="EXTREME_TEQ">Extreme TEQ</option>
+          
+            <option value="SUPER_INT">Super INT</option>
+            <option value="EXTREME_INT">Extreme INT</option>
+          
+            <option value="SUPER_PHY">Super PHY</option>
+            <option value="EXTREME_PHY">Extreme PHY</option>
+          </select>
+        </label>
+        <label>
+          Rarity:
+          <select id="raritySelect" data-bind="rarity">
+            <option value="UR" selected>UR</option>
+            <option value="LR">LR</option>
+          </select>
+        </label>   
+        <label>
+          Max Lv:
+          <input type="number" data-bind="maxLv" value="120">
+        </label>
+        <label>
+          SA Lv:
+          <input type="number" data-bind="saLv" value="10">
+        </label>
+        <label>
+          Cost:
+          <input type="number" data-bind="cost" value="58">
+        </label>
+        <label>
+          Links text (short):
+          <input type="text" data-bind="linksSmall" value="TBA">
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Skills</legend>
+        <label>
+          Leader Skill:
+          <textarea rows="2" data-bind="leaderText">"Hyperdimension Neptunia" Category Ki +3 and HP, ATK &amp; DEF +150%.</textarea>
+        </label>
+        <label>
+          Super ATK name:
+          <input type="text" data-bind="superAtkName" value="Great Slash">
+        </label>
+
+        <label>
+          Super ATK effect:
+          <textarea rows="3" data-bind="superAtkText">
+        Greatly raises DEF for 1 turn and causes immense damage.
+          </textarea>
+        </label>
+
+        <!-- Ultra Super ATK (LR only) -->
+        <div id="ultraSuperFormGroup">
+          <label>
+            Ultra Super ATK name:
+            <input type="text" data-bind="ultraSuperAtkName" value="Divine Burst of Lowee">
+          </label>
+        
+          <label>
+            Ultra Super ATK effect:
+            <textarea rows="3" data-bind="ultraSuperAtkText">
+        Greatly raises ATK &amp; DEF for 1 turn and causes mega-colossal damage.
+            </textarea>
+          </label>
+        </div>
+
+        <label>
+          Passive Skill name:
+          <input type="text" data-bind="passiveName" value="Reliable Goddess Power">
+        </label>
+
+        <label>
+          Passive Skill details:
+          <textarea rows="6" data-bind="passiveText">
+        Basic effect(s)
+        - ATK & DEF 150% [UP]
+        - Launches an additional attack
+          
+        When HP is 50% or more
+        - Guards all attacks
+          </textarea>
+        </label>
+
+        <label>
+          Active Skill name:
+          <input type="text" data-bind="activeName" value="HDD Transformation">
+        </label>
+
+        <label>
+          Active Skill condition:
+          <textarea rows="3" data-bind="activeCond">
+        Can be activated from the 5th turn (once only).
+          </textarea>
+        </label>
+
+        <label>
+          Active Skill effect:
+          <textarea rows="3" data-bind="activeText">
+        All "Hyperdimension Neptunia" Category allies' ATK & DEF +30% [UP].
+          </textarea>
+        </label>
+
+        <label>
+          Links:
+          <textarea rows="3" data-bind="linksText">Buttiful Diva - Neptunia - etc.</textarea>
+        </label>
+
+        <label>
+          Categories:
+          <textarea rows="3" data-bind="categoriesText">Hyperdimension Neptunia - Realm of Gods - etc.</textarea>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Stats</legend>
+        <p class="hint">Fill HP / ATK / DEF for each column.</p>
+        <div class="stat-grid">
+          <span></span>
+          <span>Base</span>
+          <span>Max Lv</span>
+          <span>55%</span>
+          <span>100%</span>
+
+          <span>HP</span>
+          <input type="number" data-bind="hpBase" value="2723">
+          <input type="number" data-bind="hpMax" value="11923">
+          <input type="number" data-bind="hp55" value="13293">
+          <input type="number" data-bind="hp100" value="16323">
+
+          <span>ATK</span>
+          <input type="number" data-bind="atkBase" value="1892">
+          <input type="number" data-bind="atkMax" value="8922">
+          <input type="number" data-bind="atk55" value="10252">
+          <input type="number" data-bind="atk100" value="13282">
+
+          <span>DEF</span>
+          <input type="number" data-bind="defBase" value="2371">
+          <input type="number" data-bind="defMax" value="9362">
+          <input type="number" data-bind="def55" value="10528">
+          <input type="number" data-bind="def100" value="8798">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Artwork</legend>
+        <label>
+          Upload card image:
+          <input type="file" id="artInput" accept="image/*">
+        </label>
+      </fieldset>
+
+      <fieldset class="helper-panel">
+        <legend>Syntax helper</legend>
+
+        <p class="helper-intro">
+          These codes work in <strong>Passive</strong> and <strong>Active</strong> texts:
+        </p>
+      
+        <div class="helper-row">
+          <code>[ONCE]</code>
+          <span>Once per battle / one-time effect (shows as !1)</span>
+        </div>
+      
+        <div class="helper-row">
+          <code>[INF]</code>
+          <span>Effect lasts for the whole battle / infinite stacking (∞)</span>
+        </div>
+      
+        <div class="helper-row">
+          <code>[UP]</code>
+          <span>Buff (green ▲)</span>
+        </div>
+      
+        <div class="helper-row">
+          <code>[DOWN_SELF]</code>
+          <span>Debuff to this character (red ▼)</span>
+        </div>
+      
+        <div class="helper-row">
+          <code>[DOWN_ENEMY]</code>
+          <span>Debuff to the enemy (yellow ▼)</span>
+        </div>
+      
+        <p class="helper-intro">
+          Text in <code>"quotes"</code> = blue category/name highlight.
+        </p>
+      </fieldset>
+    </form>
+  </div>
+
+  <!-- RIGHT: CARD PREVIEW -->
+  <div class="preview-panel">
+    <div class="dokkan-card">
+
+      <!-- HEADER -->
+      <div class="card-header">
+        <div class="header-title" id="titleMain">Goddess of Lowee</div>
+        <div class="header-subtitle" id="titleSub">Blanc</div>
+      </div>
+
+      <!-- TOP INFO BAR -->
+      <div class="card-subheader">
+        <div>Max Lv <span id="maxLv">120</span></div>
+        <div>SA Lv <span id="saLv">10</span></div>
+        <div>
+          <span id="rarity">UR</span>
+          <img id="rarityIcon" class="rarity-icon" src="img/UR.png" alt="UR">
+        </div>
+        <div>
+          <span id="type">Super AGL</span>
+          <img id="typeIcon" class="type-icon"
+               src="img/super-agl.png"
+               alt="Super AGL">
+        </div>
+        <div>Cost <span id="cost">58</span></div>
+        <div>Links <span id="linksSmall">TBA</span></div>
+      </div>
+
+      <!-- BODY -->
+      <div class="card-body">
+        <!-- ART -->
+        <div class="card-art">
+          <img id="cardArtImg"
+               src="https://via.placeholder.com/140x200.png?text=Artwork"
+               alt="card art">
+        </div>
+
+        <!-- INFO BOXES -->
+        <div class="card-info">
+          <section>
+            <h3>Leader Skill</h3>
+            <p id="leaderText">
+              "Hyperdimension Neptunia" Category Ki +3 and HP, ATK &amp; DEF +150%.
+            </p>
+          </section>
+
+          <section>
+            <h3>
+              Super ATK <span id="superAtkName">Great Slash</span>
+            </h3>
+            <p id="superAtkText">
+              Greatly raises DEF for 1 turn and causes immense damage.
+            </p>
+          </section>
+
+          <section id="ultraSuperSection">
+            <h3>
+              Ultra Super ATK <span id="ultraSuperAtkName">Divine Burst of Lowee</span>
+            </h3>
+            <p id="ultraSuperAtkText">
+              Greatly raises ATK &amp; DEF for 1 turn and causes mega-colossal damage.
+            </p>
+          </section>
+
+          <section>
+            <h3>
+              Passive Skill  <span id="passiveName">Reliable Goddess Power</span>
+            </h3>
+            <div id="passiveText"></div>
+          </section>
+
+          <section>
+            <h3>
+              Active Skill  <span id="activeName">HDD Transformation</span>
+            </h3>
+            <p>
+              <strong>Condition:</strong>
+              <span id="activeCond">
+                Can be activated from the 5th turn (once only).
+              </span>
+            </p>
+            <p>
+              <strong>Effect:</strong>
+              <span id="activeText">
+                All "Hyperdimension Neptunia" Category allies' ATK &amp; DEF +30% [UP].
+              </span>
+            </p>
+          </section>
+          
+          <section>
+            <h3>Links</h3>
+            <p id="linksText">
+              Buttiful Diva - Neptunia - etc.
+            </p>
+          </section>
+
+          <section>
+            <h3>Categories</h3>
+            <p id="categoriesText">
+              Hyperdimension Neptunia - Realm of Gods - etc.
+            </p>
+          </section>        
+        </div>
+      </div>
+
+      <!-- STATS TABLE -->
+      <div class="card-footer">
+        <h3>Max Level Stats</h3>
+        <table class="stats-table">
+          <tr>
+            <th></th>
+            <th>Base</th>
+            <th>Max Lv</th>
+            <th>55%</th>
+            <th>100%</th>
+          </tr>
+          <tr>
+            <th>HP</th>
+            <td id="hpBase">2723</td>
+            <td id="hpMax">11923</td>
+            <td id="hp55">13293</td>
+            <td id="hp100">16323</td>
+          </tr>
+          <tr>
+            <th>ATK</th>
+            <td id="atkBase">1892</td>
+            <td id="atkMax">8922</td>
+            <td id="atk55">10252</td>
+            <td id="atk100">13282</td>
+          </tr>
+          <tr>
+            <th>DEF</th>
+            <td id="defBase">2371</td>
+            <td id="defMax">9362</td>
+            <td id="def55">10528</td>
+            <td id="def100">8798</td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

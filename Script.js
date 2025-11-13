@@ -1,0 +1,283 @@
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&")
+    .replace(/</g, "&;")
+    .replace(/>/g, "&");
+}
+
+// Make everything between " " blue using .category-name
+function formatQuotedText(text) {
+  const escaped = escapeHtml(text);
+  const parts = escaped.split('"');
+
+  let html = "";
+  let insideQuotes = false;
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+
+    if (insideQuotes) {
+      html += '<span class="category-name">"' + part + '"</span>';
+    } else {
+      html += part;
+    }
+
+    insideQuotes = !insideQuotes; // flip each time we pass a "
+  }
+
+  return html;
+}
+
+function formatPassiveInline(text) {
+  let escaped = escapeHtml(text);
+
+  // first: turn "quotes" blue
+  let html = formatQuotedText(escaped);
+
+  // then replace icon codes
+  html = html.replace(/\[ONCE\]/g, '<span class="icon-once">!1</span>');
+  html = html.replace(/\[INF\]/g, '<span class="icon-inf">∞</span>');
+  html = html.replace(/\[UP\]/g, '<span class="icon-up">▲</span>');
+  html = html.replace(/\[DOWN_SELF\]/g, '<span class="icon-down-self">▼</span>');
+  html = html.replace(/\[DOWN_ENEMY\]/g, '<span class="icon-down-enemy">▼</span>');
+
+  return html;
+}
+
+
+function formatPassiveText(text) {
+  const lines = text.split(/\r?\n/);
+
+  let html = "";
+  let inList = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    // blank line
+    if (!line) {
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      html += "<br>";
+      continue;
+    }
+
+    // bullet lines: "- something"
+    if (line.startsWith("- ")) {
+      if (!inList) {
+        html += '<ul class="passive-list">';
+        inList = true;
+      }
+      const content = line.slice(2);
+      html += "<li>" + formatPassiveInline(content) + "</li>";
+    }
+
+    // heading/condition line
+    else {
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      html += '<p class="passive-heading">' + formatPassiveInline(line) + "</p>";
+    }
+  }
+
+  if (inList) html += "</ul>";
+
+  return html;
+}
+
+function formatLinks(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+  let html = "";
+
+  for (const line of lines) {
+    const escaped = escapeHtml(line);
+    html += `<div class="link-line">${escaped}</div>`;
+  }
+
+  return html;
+}
+
+function formatCategories(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l !== "");
+  let html = "";
+
+  for (const line of lines) {
+    const escaped = escapeHtml(line);
+    html += `<div class="category-line">${escaped}</div>`;
+  }
+
+  return html;
+}
+
+
+// Binds every input/textarea with [data-bind] to the matching element ID
+function setupBindings() {
+  const bindableInputs = document.querySelectorAll("[data-bind]");
+
+  bindableInputs.forEach(input => {
+    const id = input.dataset.bind;
+    const target = document.getElementById(id);
+    if (!target) return;
+
+    const update = () => {
+      let value = input.value;
+      if (input.type === "number" && value === "") {
+        value = "0";
+      }
+
+      // special formatting for fields that support quoted categories
+      if (
+        id === "leaderText" ||
+        id === "superAtkText" ||
+        id === "ultraSuperAtkText"
+      ) {
+        // simple quoted text (no icons)
+        target.innerHTML = formatQuotedText(value);
+      }
+      else if (id === "activeText" || id === "activeCond") {
+        // Active Skill condition + effect: quotes + icons
+        target.innerHTML = formatPassiveInline(value);
+      }
+      else if (id === "passiveText") {
+        target.innerHTML = formatPassiveText(value);
+      }
+      else if (id === "linksText") {
+        target.innerHTML = formatLinks(value);
+      }
+      else if (id === "categoriesText") {
+        target.innerHTML = formatCategories(value);
+      }
+      else {
+        target.textContent = value;
+      }
+    };
+
+    input.addEventListener("input", update);
+    update(); // initial
+  });
+}
+
+// Simple image preview from file input
+function setupImageUpload() {
+  const fileInput = document.getElementById("artInput");
+  const img = document.getElementById("cardArtImg");
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function setupTypeSelector() {
+  const select = document.getElementById("typeSelect");
+  const icon = document.getElementById("typeIcon");
+  const card = document.querySelector(".dokkan-card");
+
+  const updateTypeIcon = () => {
+    const value = select.value; // e.g. SUPER_AGL
+    const label = select.options[select.selectedIndex].text;
+    const iconPath = `img/${value}.png`;
+
+    icon.src = iconPath;
+    icon.alt = label;
+
+    // Remove old type classes
+    card.classList.forEach(cls => {
+      if (cls.startsWith("type-")) {
+        card.classList.remove(cls);
+      }
+    });
+
+    // Add the new type class
+    card.classList.add(`type-${value}`);
+  };
+
+  select.addEventListener("change", updateTypeIcon);
+  updateTypeIcon();
+}
+
+
+function setupRaritySelector() {
+  const select = document.getElementById("raritySelect");
+  const icon = document.getElementById("rarityIcon");
+  const ultraSection = document.getElementById("ultraSuperSection");
+  const ultraFormGroup = document.getElementById("ultraSuperFormGroup");
+
+  if (!select || !icon) return;
+
+  const rarityDefaults = {
+    UR: { maxLv: 120, saLv: 10, cost: 58 },
+    LR: { maxLv: 150, saLv: 20, cost: 77 }
+  };
+
+  const updateRarity = () => {
+    const rarity = select.value;
+    const defaults = rarityDefaults[rarity];
+
+    icon.src = `img/${rarity}.png`;
+    icon.alt = rarity;
+
+    // Auto stats
+    const maxLvInput = document.querySelector('[data-bind="maxLv"]');
+    const saLvInput  = document.querySelector('[data-bind="saLv"]');
+    const costInput  = document.querySelector('[data-bind="cost"]');
+
+    if (defaults) {
+      if (maxLvInput) { maxLvInput.value = defaults.maxLv; maxLvInput.dispatchEvent(new Event("input")); }
+      if (saLvInput)  { saLvInput.value  = defaults.saLv;  saLvInput.dispatchEvent(new Event("input")); }
+      if (costInput)  { costInput.value  = defaults.cost;  costInput.dispatchEvent(new Event("input")); }
+    }
+
+    // 🔹 Show Ultra Super only for LR
+    const showUltra = (rarity === "LR");
+    if (ultraSection) ultraSection.style.display = showUltra ? "block" : "none";
+    if (ultraFormGroup) ultraFormGroup.style.display = showUltra ? "block" : "none";
+  };
+
+  select.addEventListener("change", updateRarity);
+  updateRarity(); // initial setup
+}
+
+// Insert helper tags into the active textarea/input
+document.querySelectorAll(".helper-tags button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tag = btn.dataset.tag;
+    const active = document.activeElement;
+
+    // Only insert into text inputs or textareas
+    if (active && (active.tagName === "TEXTAREA" || active.tagName === "INPUT")) {
+      const start = active.selectionStart;
+      const end = active.selectionEnd;
+
+      // Insert text at cursor position
+      active.value =
+        active.value.substring(0, start) +
+        tag +
+        active.value.substring(end);
+
+      // Move cursor after inserted tag
+      active.selectionStart = active.selectionEnd = start + tag.length;
+
+      // Trigger input event so preview updates immediately
+      active.dispatchEvent(new Event("input"));
+    }
+  });
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupBindings();
+  setupImageUpload();
+  setupTypeSelector();
+  setupRaritySelector();  // 🔹 NEW
+});
