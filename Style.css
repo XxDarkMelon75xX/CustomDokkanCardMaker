@@ -159,6 +159,24 @@ textarea {
   color: #ddd;
 }
 
+/* default: show base, hide transformed */
+.dokkan-card [data-form="transformed"] {
+  display: none;
+}
+
+/* when transformed form is active */
+.dokkan-card.form-transformed [data-form="base"] {
+  display: none;
+}
+
+.dokkan-card.form-transformed [data-form="transformed"] {
+  display: inline; /* for spans */
+}
+
+/* for blocks like div/passive text */
+.dokkan-card.form-transformed div[data-form="transformed"] {
+  display: block;
+}
 
 /* Dokkan-like card */
 .dokkan-card {

@@ -142,7 +142,7 @@ function setupBindings() {
         // Active Skill condition + effect: quotes + icons
         target.innerHTML = formatPassiveInline(value);
       }
-      else if (id === "passiveText") {
+      else if (id === "passiveText" || id === "t_passiveText") {
         target.innerHTML = formatPassiveText(value);
       }
       else if (id === "linksText") {
@@ -163,20 +163,30 @@ function setupBindings() {
 
 // Simple image preview from file input
 function setupImageUpload() {
-  const fileInput = document.getElementById("artInput");
-  const img = document.getElementById("cardArtImg");
+  const setups = [
+    { inputId: "artInput", imgId: "cardArtImg" },
+    { inputId: "artInputTrans", imgId: "cardArtImgTrans" }
+  ];
 
-  fileInput.addEventListener("change", () => {
-    const file = fileInput.files[0];
-    if (!file) return;
+  setups.forEach(({ inputId, imgId }) => {
+    const fileInput = document.getElementById(inputId);
+    const img = document.getElementById(imgId);
 
-    const reader = new FileReader();
-    reader.onload = e => {
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    if (!fileInput || !img) return;
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
   });
 }
+
 
 function setupTypeSelector() {
   const select = document.getElementById("typeSelect");
@@ -248,6 +258,42 @@ function setupRaritySelector() {
   updateRarity(); // initial setup
 }
 
+function setupFormToggle() {
+  const card = document.querySelector(".dokkan-card");
+  const formRoot = document.querySelector(".creator-panel");
+  const radios = document.querySelectorAll('input[name="formMode"]');
+
+  if (!card || !formRoot || !radios.length) return;
+
+  const update = () => {
+    const checked = Array.from(radios).find(r => r.checked);
+    const mode = checked ? checked.value : "base"; // "base" or "transformed"
+
+    // --- Preview card toggle ---
+    if (mode === "transformed") {
+      card.classList.add("form-transformed");
+    } else {
+      card.classList.remove("form-transformed");
+    }
+
+    // --- Form toggle (left panel) ---
+    formRoot.querySelectorAll('[data-form="base"]').forEach(el => {
+      el.style.display = mode === "base" ? "" : "none";
+    });
+
+    formRoot.querySelectorAll('[data-form="transformed"]').forEach(el => {
+      el.style.display = mode === "transformed" ? "" : "none";
+    });
+  };
+
+  radios.forEach(radio => {
+    radio.addEventListener("change", update);
+  });
+
+  update(); // initial state
+}
+
+
 // Insert helper tags into the active textarea/input
 document.querySelectorAll(".helper-tags button").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -279,5 +325,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBindings();
   setupImageUpload();
   setupTypeSelector();
-  setupRaritySelector();  // 🔹 NEW
+  setupRaritySelector();
+  setupFormToggle();   // 🔹 NEW
 });

@@ -12,7 +12,19 @@
   <div class="creator-panel">
     <h1>Dokkan Card Creator</h1>
     <form id="cardForm">
-      
+      <fieldset>
+        <legend>Form preview</legend>
+        <label>
+          <input type="radio" name="formMode" value="base" checked>
+          Base form
+        </label>
+        <br>
+        <label>
+          <input type="radio" name="formMode" value="transformed">
+          Transformed form
+        </label>
+      </fieldset>
+
       <fieldset>
         <legend>General</legend>
         <label>
@@ -73,33 +85,69 @@
           Leader Skill:
           <textarea rows="2" data-bind="leaderText">"Hyperdimension Neptunia" Category Ki +3 and HP, ATK &amp; DEF +150%.</textarea>
         </label>
+
+        <div data-form="base">
         <label>
           Super ATK name:
           <input type="text" data-bind="superAtkName" value="Great Slash">
         </label>
 
-        <label>
+          <label>
           Super ATK effect:
           <textarea rows="3" data-bind="superAtkText">
         Greatly raises DEF for 1 turn and causes immense damage.
           </textarea>
-        </label>
-
-        <!-- Ultra Super ATK (LR only) -->
-        <div id="ultraSuperFormGroup">
-          <label>
-            Ultra Super ATK name:
-            <input type="text" data-bind="ultraSuperAtkName" value="Divine Burst of Lowee">
-          </label>
-        
-          <label>
-            Ultra Super ATK effect:
-            <textarea rows="3" data-bind="ultraSuperAtkText">
-        Greatly raises ATK &amp; DEF for 1 turn and causes mega-colossal damage.
-            </textarea>
           </label>
         </div>
 
+        <div data-form="transformed">
+        <label>
+          Transformed Super ATK name:
+          <input type="text" data-bind="t_superAtkName" value="Great Slash of Love (HDD)">
+        </label>
+
+        <label>
+          Transformed Super ATK effect:
+          <textarea rows="3" data-bind="t_superAtkText">
+        Greatly raises ATK &amp; DEF for 1 turn and causes immense damage.
+          </textarea>
+        </label>
+        </div>
+
+        <!-- Ultra Super ATK (LR only, both forms inside this group) -->
+        <div id="ultraSuperFormGroup">
+          <!-- BASE -->
+          <div data-form="base">
+            <label>
+              Ultra Super ATK name:
+              <input type="text" data-bind="ultraSuperAtkName" value="Divine Burst of Lowee">
+            </label>
+          
+            <label>
+              Ultra Super ATK effect:
+              <textarea rows="3" data-bind="ultraSuperAtkText">
+        Greatly raises ATK &amp; DEF for 1 turn and causes mega-colossal damage.
+              </textarea>
+            </label>
+          </div>
+        
+          <!-- TRANSFORMED -->
+          <div data-form="transformed">
+            <label>
+              Transformed Ultra Super ATK name:
+              <input type="text" data-bind="t_ultraSuperAtkName" value="Divine Burst of Lowee (HDD)">
+            </label>
+          
+            <label>
+              Transformed Ultra Super ATK effect:
+              <textarea rows="3" data-bind="t_ultraSuperAtkText">
+        Greatly raises ATK &amp; DEF for 1 turn and causes mega-colossal damage.
+              </textarea>
+            </label>
+          </div>
+        </div>
+
+        <div data-form="base">
         <label>
           Passive Skill name:
           <input type="text" data-bind="passiveName" value="Reliable Goddess Power">
@@ -116,7 +164,25 @@
         - Guards all attacks
           </textarea>
         </label>
+        </div>
 
+        <div data-form="transformed">
+        <label>
+          Transformed Passive name:
+          <input type="text" data-bind="t_passiveName" value="Reliable Goddess Power (HDD)">
+        </label>
+
+        <label>
+          Transformed Passive details:
+          <textarea rows="6" data-bind="t_passiveText">
+        Basic effect(s)
+        - ATK & DEF 200% [UP]
+        - Launches 2 additional attacks
+          </textarea>
+        </label>
+        </div>
+
+        <div data-form="base">
         <label>
           Active Skill name:
           <input type="text" data-bind="activeName" value="HDD Transformation">
@@ -135,6 +201,28 @@
         All "Hyperdimension Neptunia" Category allies' ATK & DEF +30% [UP].
           </textarea>
         </label>
+        </div>
+
+        <div data-form="transformed">
+        <label>
+          Transformed Active Skill name:
+          <input type="text" data-bind="t_activeName" value="Return to Base Form">
+        </label>
+
+        <label>
+          Transformed Active condition:
+          <textarea rows="3" data-bind="t_activeCond">
+        Can be activated starting from the 3rd turn after transformation.
+          </textarea>
+        </label>
+
+        <label>
+          Transformed Active effect:
+          <textarea rows="3" data-bind="t_activeText">
+        Transforms back into base form and recovers 30% HP.
+          </textarea>
+        </label>
+        </div>
 
         <label>
           Links:
@@ -179,10 +267,19 @@
 
       <fieldset>
         <legend>Artwork</legend>
+        <div data-form="base">
         <label>
           Upload card image:
           <input type="file" id="artInput" accept="image/*">
         </label>
+        </div>
+      
+        <div data-form="transformed">
+        <label>
+          Upload transformed image:
+          <input type="file" id="artInputTrans" accept="image/*">
+        </label>
+        </div>
       </fieldset>
 
       <fieldset class="helper-panel">
@@ -257,8 +354,14 @@
         <!-- ART -->
         <div class="card-art">
           <img id="cardArtImg"
-               src="https://via.placeholder.com/140x200.png?text=Artwork"
-               alt="card art">
+               data-form="base"
+               src="https://via.placeholder.com/240x320.png?text=Base+Art"
+               alt="base art">
+        
+          <img id="cardArtImgTrans"
+               data-form="transformed"
+               src="https://via.placeholder.com/240x320.png?text=Transformed+Art"
+               alt="transformed art">
         </div>
 
         <!-- INFO BOXES -->
@@ -270,49 +373,64 @@
             </p>
           </section>
 
+
           <section>
             <h3>
-              Super ATK <span id="superAtkName">Great Slash</span>
+              Super ATK 
+              <span id="superAtkName" data-form="base">Great Slash</span>
+              <span id="t_superAtkName" data-form="transformed">Great Slash (HDD)</span>
             </h3>
-            <p id="superAtkText">
-              Greatly raises DEF for 1 turn and causes immense damage.
+            <p>
+              <span id="superAtkText" data-form="base">
+                Greatly raises DEF for 1 turn and causes immense damage.
+              </span>
+              <span id="t_superAtkText" data-form="transformed">
+                Greatly raises ATK &amp; DEF for 1 turn and causes immense damage.
+              </span>
             </p>
           </section>
 
           <section id="ultraSuperSection">
             <h3>
-              Ultra Super ATK <span id="ultraSuperAtkName">Divine Burst of Lowee</span>
+              Ultra Super ATK
+              <span id="ultraSuperAtkName" data-form="base">Divine Burst</span>
+              <span id="t_ultraSuperAtkName" data-form="transformed">Divine Burst (HDD)</span>
             </h3>
-            <p id="ultraSuperAtkText">
-              Greatly raises ATK &amp; DEF for 1 turn and causes mega-colossal damage.
+            <p>
+              <span id="ultraSuperAtkText" data-form="base">...</span>
+              <span id="t_ultraSuperAtkText" data-form="transformed">...</span>
             </p>
           </section>
 
+
           <section>
             <h3>
-              Passive Skill  <span id="passiveName">Reliable Goddess Power</span>
+              Passive Skill
+              <span id="passiveName" data-form="base">Reliable Goddess Power</span>
+              <span id="t_passiveName" data-form="transformed">Reliable Goddess Power (HDD)</span>
             </h3>
-            <div id="passiveText"></div>
+            <div id="passiveText" data-form="base"></div>
+            <div id="t_passiveText" data-form="transformed"></div>
           </section>
 
           <section>
             <h3>
-              Active Skill  <span id="activeName">HDD Transformation</span>
+              Active Skill
+              <span id="activeName" data-form="base">HDD Transformation</span>
+              <span id="t_activeName" data-form="transformed">Return to Base Form</span>
             </h3>
             <p>
               <strong>Condition:</strong>
-              <span id="activeCond">
-                Can be activated from the 5th turn (once only).
-              </span>
+              <span id="activeCond" data-form="base">...</span>
+              <span id="t_activeCond" data-form="transformed">...</span>
             </p>
             <p>
               <strong>Effect:</strong>
-              <span id="activeText">
-                All "Hyperdimension Neptunia" Category allies' ATK &amp; DEF +30% [UP].
-              </span>
+              <span id="activeText" data-form="base">...</span>
+              <span id="t_activeText" data-form="transformed">...</span>
             </p>
           </section>
-          
+
           <section>
             <h3>Links</h3>
             <p id="linksText">
