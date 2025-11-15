@@ -13,10 +13,14 @@
     <h1>Dokkan Card Creator</h1>
     <form id="cardForm">
       <fieldset>
-        <legend>Transformation</legend>
+        <legend>Active Skill Info</legend>
         <label>
           <input type="checkbox" id="hasTransform">
           This card has a transformation active skill
+        </label>
+        <label>
+          <input type="checkbox" id="hasActiveSkill" checked>
+          This card has an Active Skill
         </label>
       </fieldset>
 
@@ -190,46 +194,46 @@
         </label>
         </div>
 
-        <div data-form="base">
-        <label>
-          Active Skill name:
-          <input type="text" data-bind="activeName" value="HDD Transformation">
-        </label>
-
-        <label>
-          Active Skill condition:
-          <textarea rows="3" data-bind="activeCond">
+        <div id="activeSkillFormFields" data-form="base">
+          <label>
+            Active Skill name:
+            <input type="text" data-bind="activeName" value="HDD Transformation">
+          </label>
+        
+          <label>
+            Active Skill condition:
+            <textarea rows="3" data-bind="activeCond">
         Can be activated from the 5th turn (once only).
-          </textarea>
-        </label>
-
-        <label>
-          Active Skill effect:
-          <textarea rows="3" data-bind="activeText">
+            </textarea>
+          </label>
+        
+          <label>
+            Active Skill effect:
+            <textarea rows="3" data-bind="activeText">
         All "Hyperdimension Neptunia" Category allies' ATK & DEF +30% [UP].
-          </textarea>
-        </label>
+            </textarea>
+          </label>
         </div>
 
-        <div data-form="transformed">
-        <label>
-          Transformed Active Skill name:
-          <input type="text" data-bind="t_activeName" value="Return to Base Form">
-        </label>
-
-        <label>
-          Transformed Active condition:
-          <textarea rows="3" data-bind="t_activeCond">
+        <div id="activeSkillFormFieldsTrans" data-form="transformed">
+          <label>
+            Transformed Active Skill name:
+            <input type="text" data-bind="t_activeName" value="Return to Base Form">
+          </label>
+        
+          <label>
+            Transformed Active condition:
+            <textarea rows="3" data-bind="t_activeCond">
         Can be activated starting from the 3rd turn after transformation.
-          </textarea>
-        </label>
-
-        <label>
-          Transformed Active effect:
-          <textarea rows="3" data-bind="t_activeText">
+            </textarea>
+          </label>
+        
+          <label>
+            Transformed Active effect:
+            <textarea rows="3" data-bind="t_activeText">
         Transforms back into base form and recovers 30% HP.
-          </textarea>
-        </label>
+            </textarea>
+          </label>
         </div>
 
         <label>
@@ -426,7 +430,7 @@
             <div id="t_passiveText" data-form="transformed"></div>
           </section>
 
-          <section>
+          <section id="activeSkillSection">
             <h3>
               Active Skill
               <span id="activeName" data-form="base">HDD Transformation</span>

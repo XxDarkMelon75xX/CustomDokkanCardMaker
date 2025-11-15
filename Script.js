@@ -380,6 +380,31 @@ function setupExportButton() {
   });
 }
 
+const hasActiveSkill = document.getElementById("hasActiveSkill");
+
+const activeSkillSection = document.getElementById("activeSkillSection");
+const activeSkillFormFields = document.getElementById("activeSkillFormFields");
+const activeSkillFormFieldsTrans = document.getElementById("activeSkillFormFieldsTrans");
+
+function updateActiveSkillVisibility() {
+  const enabled = hasActiveSkill.checked;
+
+  // Show / hide preview
+  activeSkillSection.style.display = enabled ? "block" : "none";
+
+  // Show / hide form fields
+  activeSkillFormFields.style.display = enabled ? "block" : "none";
+
+  if (activeSkillFormFieldsTrans) {
+    activeSkillFormFieldsTrans.style.display = enabled ? "block" : "none";
+  }
+}
+
+hasActiveSkill.addEventListener("change", updateActiveSkillVisibility);
+
+// Run at startup
+updateActiveSkillVisibility();
+
 document.addEventListener("DOMContentLoaded", () => {
   setupBindings();
   setupImageUpload();

@@ -423,31 +423,31 @@ section h3 span {
 /* AGL (Blue) */
 .type-SUPER_AGL,
 .type-EXTREME_AGL {
-  --main-color: #2d8bff;
+  --main-color: #1f6ece;
 }
 
 /* STR (Red) */
 .type-SUPER_STR,
 .type-EXTREME_STR {
-  --main-color: #ff3b3b;
+  --main-color: #ad1e1e;
 }
 
 /* TEQ (Green) */
 .type-SUPER_TEQ,
 .type-EXTREME_TEQ {
-  --main-color: #38c44a;
+  --main-color: #249934;
 }
 
 /* INT (Purple) */
 .type-SUPER_INT,
 .type-EXTREME_INT {
-  --main-color: #a133ff;
+  --main-color: #7923c4;
 }
 
 /* PHY (Yellow/Orange) */
 .type-SUPER_PHY,
 .type-EXTREME_PHY {
-  --main-color: #ffc02d;
+  --main-color: #b88a20;
 }
 
 /* Position the button above the card, centered, NOT inside the card */
