@@ -351,11 +351,12 @@ function slugify(str) {
 
 function setupExportButton() {
   const btn = document.getElementById("exportPngBtn");
-  const card = document.getElementById("dokkanCard"); // ✅ just the card
+  const card = document.getElementById("dokkanCard");
 
   if (!btn || !card || typeof html2canvas === "undefined") return;
 
   btn.addEventListener("click", async () => {
+    // we still use the “real” card to know form state + title
     const isTransformed = card.classList.contains("form-transformed");
     const modeLabel = isTransformed ? "transformed" : "base";
 
@@ -364,21 +365,57 @@ function setupExportButton() {
     const fullTitle = (titleMain + " " + titleSub).trim();
     const fileBase = slugify(fullTitle) || "card";
 
-    const canvas = await html2canvas(card, {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true
-    });
+    try {
+      // 🔹 CLONE the card OUTSIDE the scrollable preview so nothing is cropped
+      const clone = card.cloneNode(true);
+      clone.id = "dokkanCardExportClone";
+      clone.style.position = "fixed";
+      clone.style.left = "-9999px";   // off-screen
+      clone.style.top = "0";
+      clone.style.margin = "0";
+      document.body.appendChild(clone);
 
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `${fileBase}_${modeLabel}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // PNG EXPORT using the clone
+      const canvas = await html2canvas(clone, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true
+      });
+
+      // remove clone after rendering
+      document.body.removeChild(clone);
+
+      // download PNG
+      const dataUrl = canvas.toDataURL("image/png");
+      const linkPng = document.createElement("a");
+      linkPng.href = dataUrl;
+      linkPng.download = `${fileBase}_${modeLabel}.png`;
+      document.body.appendChild(linkPng);
+      linkPng.click();
+      document.body.removeChild(linkPng);
+
+      // JSON EXPORT (same as before)
+      const jsonData = collectCardData();
+      const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], {
+        type: "application/json"
+      });
+      const jsonUrl = URL.createObjectURL(jsonBlob);
+      const linkJson = document.createElement("a");
+      linkJson.href = jsonUrl;
+      linkJson.download = `${fileBase}_${modeLabel}.json`;
+      document.body.appendChild(linkJson);
+      linkJson.click();
+      document.body.removeChild(linkJson);
+      URL.revokeObjectURL(jsonUrl);
+
+    } catch (err) {
+      console.error("Export failed:", err);
+      alert("PNG/JSON export failed. Check the console for details.");
+    }
   });
 }
+
+
 
 const hasActiveSkill = document.getElementById("hasActiveSkill");
 
@@ -405,11 +442,136 @@ hasActiveSkill.addEventListener("change", updateActiveSkillVisibility);
 // Run at startup
 updateActiveSkillVisibility();
 
+// --JSON Functions-- //
+
+function collectCardData() {
+  const data = {
+    version: 1,
+    binds: {},
+    rarity: null,
+    type: null,
+    hasTransform: false,
+    hasActiveSkill: true,
+    formMode: "base"
+  };
+
+  // All [data-bind] fields (inputs + textareas)
+  document.querySelectorAll("[data-bind]").forEach(input => {
+    const key = input.dataset.bind;
+    if (!key) return;
+    data.binds[key] = input.value;
+  });
+
+  // Type & rarity selectors (if present)
+  const typeSelect = document.getElementById("typeSelect");
+  if (typeSelect) data.type = typeSelect.value;
+
+  const raritySelect = document.getElementById("raritySelect");
+  if (raritySelect) data.rarity = raritySelect.value;
+
+  // Transformation toggle
+  const hasTransform = document.getElementById("hasTransform");
+  if (hasTransform) data.hasTransform = !!hasTransform.checked;
+
+  // Active Skill toggle
+  const hasActiveSkill = document.getElementById("hasActiveSkill");
+  if (hasActiveSkill) data.hasActiveSkill = !!hasActiveSkill.checked;
+
+  // Current form mode (base / transformed)
+  const fm = document.querySelector('input[name="formMode"]:checked');
+  if (fm) data.formMode = fm.value;
+
+  return data;
+}
+
+function applyCardData(data) {
+  if (!data || typeof data !== "object") return;
+
+  // Type & rarity first (so icons/colors update)
+  if (data.type && document.getElementById("typeSelect")) {
+    const typeSelect = document.getElementById("typeSelect");
+    typeSelect.value = data.type;
+    typeSelect.dispatchEvent(new Event("change"));
+  }
+
+  if (data.rarity && document.getElementById("raritySelect")) {
+    const raritySelect = document.getElementById("raritySelect");
+    raritySelect.value = data.rarity;
+    raritySelect.dispatchEvent(new Event("change"));
+  }
+
+  // Transform toggle
+  if (typeof data.hasTransform === "boolean") {
+    const hasTransform = document.getElementById("hasTransform");
+    if (hasTransform) {
+      hasTransform.checked = data.hasTransform;
+      hasTransform.dispatchEvent(new Event("change"));
+    }
+  }
+
+  // Active Skill toggle
+  if (typeof data.hasActiveSkill === "boolean") {
+    const hasActiveSkill = document.getElementById("hasActiveSkill");
+    if (hasActiveSkill) {
+      hasActiveSkill.checked = data.hasActiveSkill;
+      hasActiveSkill.dispatchEvent(new Event("change"));
+    }
+  }
+
+  // Form mode
+  if (data.formMode) {
+    const radio = document.querySelector(`input[name="formMode"][value="${data.formMode}"]`);
+    if (radio) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event("change"));
+    }
+  }
+
+  // Restore all [data-bind] values (this also updates preview via your bindings)
+  if (data.binds && typeof data.binds === "object") {
+    Object.entries(data.binds).forEach(([key, value]) => {
+      const input = document.querySelector(`[data-bind="${key}"]`);
+      if (!input) return;
+      input.value = value;
+      input.dispatchEvent(new Event("input"));
+    });
+  }
+}
+
+function setupImportJson() {
+  const btn = document.getElementById("importJsonBtn");
+  const fileInput = document.getElementById("importJsonFile");
+  if (!btn || !fileInput) return;
+
+  btn.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        applyCardData(data);
+      } catch (err) {
+        console.error("Invalid JSON file:", err);
+        alert("Invalid JSON file.");
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
   setupBindings();
   setupImageUpload();
   setupTypeSelector();
   setupRaritySelector();
   setupFormToggle();
-  setupExportButton();   // 🔹 NEW
+  setupExportButton();
+  setupImportJson();   // 🔹 NEW
 });
