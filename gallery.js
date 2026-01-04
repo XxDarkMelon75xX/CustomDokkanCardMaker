@@ -60,6 +60,7 @@ let CATEGORY_INDEX = []; // [{key,label}]
 const state = {
   type: "ALL",
   align: "ALL",
+  rarity: "ALL",    
   catSearch: "",
   selectedCats: new Set()
 };
@@ -139,9 +140,10 @@ function renderCategoryList() {
 function setupFiltersUI() {
   const typeSel = document.getElementById("filterType");
   const alignSel = document.getElementById("filterAlign");
+  const raritySel = document.getElementById("filterRarity");
   const clearBtn = document.getElementById("clearFiltersBtn");
   const catSearch = document.getElementById("categorySearch");
-
+  
   if (typeSel) {
     typeSel.addEventListener("change", () => {
       state.type = typeSel.value;
@@ -152,6 +154,13 @@ function setupFiltersUI() {
   if (alignSel) {
     alignSel.addEventListener("change", () => {
       state.align = alignSel.value;
+      renderGrid();
+    });
+  }
+
+  if (raritySel) {
+  raritySel.addEventListener("change", () => {
+      state.rarity = raritySel.value;
       renderGrid();
     });
   }
@@ -167,11 +176,13 @@ function setupFiltersUI() {
     clearBtn.addEventListener("click", () => {
       state.type = "ALL";
       state.align = "ALL";
+      state.rarity = "ALL";
       state.catSearch = "";
       state.selectedCats.clear();
 
       if (typeSel) typeSel.value = "ALL";
       if (alignSel) alignSel.value = "ALL";
+      if (raritySel) raritySel.value = "ALL";
       if (catSearch) catSearch.value = "";
 
       renderCategoryList();
@@ -201,6 +212,7 @@ function renderGrid() {
 
     if (state.type !== "ALL" && type !== state.type) return false;
     if (state.align !== "ALL" && align !== state.align) return false;
+    if (state.rarity !== "ALL" && (card.rarity || "").toUpperCase() !== state.rarity) return false;
 
     // AND categories
     for (const needed of state.selectedCats) {
@@ -210,9 +222,9 @@ function renderGrid() {
   });
 
   // --- sort (your order) ---
-  const RARITY_ORDER = { LR: 0, UR: 1 };
   const TYPE_ORDER = { AGL: 0, TEQ: 1, INT: 2, STR: 3, PHY: 4 };
   const ALIGN_ORDER = { SUPER: 0, EXTREME: 1 };
+  const RARITY_ORDER = { LR: 0, UR: 1 };
 
   function splitType(t) {
     const parts = (t || "").toUpperCase().split("_");
@@ -228,30 +240,30 @@ function renderGrid() {
   }
 
   filtered.sort((a, b) => {
-    // rarity
-    const ra = RARITY_ORDER[a.rarity] ?? 99;
-    const rb = RARITY_ORDER[b.rarity] ?? 99;
-    if (ra !== rb) return ra - rb;
-
-    // type first (AGL->TEQ->INT->STR->PHY)
     const at = splitType(a.type);
     const bt = splitType(b.type);
-
+  
+    // 1) Type
     const ta = TYPE_ORDER[at.type] ?? 99;
     const tb = TYPE_ORDER[bt.type] ?? 99;
     if (ta !== tb) return ta - tb;
-
-    // then super before extreme
+  
+    // 2) Class (Super then Extreme)
     const aa = ALIGN_ORDER[at.align] ?? 99;
     const ba = ALIGN_ORDER[bt.align] ?? 99;
     if (aa !== ba) return aa - ba;
-
-    // then alphabetical by real name
+  
+    // 3) Rarity inside each class/type
+    const ra = RARITY_ORDER[(a.rarity || "").toUpperCase()] ?? 99;
+    const rb = RARITY_ORDER[(b.rarity || "").toUpperCase()] ?? 99;
+    if (ra !== rb) return ra - rb;
+  
+    // 4) Name
     const nameA = cleanName(a.titleMain);
     const nameB = cleanName(b.titleMain);
     return nameA.localeCompare(nameB, "en", { sensitivity: "base" });
   });
-
+  
   // --- draw grid ---
   grid.innerHTML = "";
 
