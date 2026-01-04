@@ -28,6 +28,76 @@ function formatQuotedText(text) {
   return html;
 }
 
+const STORAGE_KEY = "dokkan_cards_v1";
+
+function getGalleryCards() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function setGalleryCards(cards) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+}
+
+function makeId() {
+  return "c_" + Date.now() + "_" + Math.random().toString(16).slice(2, 6);
+}
+
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("dokkanDB", 1);
+
+    request.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains("cards")) {
+        db.createObjectStore("cards", { keyPath: "id" });
+      }
+    };
+
+    request.onsuccess = e => {
+      db = e.target.result;
+      resolve(db);
+    };
+
+    request.onerror = e => reject(e);
+  });
+}
+
+function saveCardToDB(card) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("cards", "readwrite");
+    const store = tx.objectStore("cards");
+    store.put(card);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
+function loadCardFromDB(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("cards", "readonly");
+    const store = tx.objectStore("cards");
+    const req = store.get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = e => reject(e);
+  });
+}
+
+function loadAllCardsFromDB() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("cards", "readonly");
+    const store = tx.objectStore("cards");
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = e => reject(e);
+  });
+}
+
 function formatPassiveInline(text) {
   let escaped = escapeHtml(text);
 
@@ -538,6 +608,21 @@ function applyCardData(data) {
   }
 }
 
+function setupNewCardButton() {
+  const btn = document.getElementById("newCardBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    // remove ?id from URL so next save creates a new entry
+    const url = new URL(window.location.href);
+    url.searchParams.delete("id");
+    window.history.replaceState({}, "", url.toString());
+
+    // optional: reload page to fully reset everything
+    location.reload();
+  });
+}
+
 function setupImportJson() {
   const btn = document.getElementById("importJsonBtn");
   const fileInput = document.getElementById("importJsonFile");
@@ -565,13 +650,72 @@ function setupImportJson() {
   });
 }
 
+function setupSaveToGallery() {
+  const btn = document.getElementById("saveToGalleryBtn");
+  if (!btn) return;
 
-document.addEventListener("DOMContentLoaded", () => {
+  btn.addEventListener("click", async () => {
+  const data = collectCardData();
+  const titleMain = document.getElementById("titleMain").textContent;
+  const titleSub = document.getElementById("titleSub").textContent;
+  const rarity = document.getElementById("raritySelect")?.value;
+  const type = document.getElementById("typeSelect")?.value;
+  const hasTransform = document.getElementById("hasTransform")?.checked;
+
+  const artImg = document.getElementById("cardArtImg");
+  const artBlob = await fetch(artImg.src).then(r => r.blob());
+
+  const url = new URL(window.location.href);
+  let id = url.searchParams.get("id");
+  if (!id) {
+    id = "c_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+    url.searchParams.set("id", id);
+    window.history.replaceState({}, "", url.toString());
+  }
+
+  await saveCardToDB({
+    id,
+    titleMain,
+    titleSub,
+    rarity,
+    type,
+    hasTransform,
+    artBlob,
+    data,
+    updatedAt: Date.now()
+  });
+
+  alert("Saved to gallery!");
+  });
+}
+
+async function loadFromGalleryByIdIfPresent() {
+  const url = new URL(window.location.href);
+  const id = url.searchParams.get("id");
+  if (!id) return;
+
+  const card = await loadCardFromDB(id);
+  if (!card) return;
+
+  applyCardData(card.data);
+
+  if (card.artBlob) {
+    const imgURL = URL.createObjectURL(card.artBlob);
+    document.getElementById("cardArtImg").src = imgURL;
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await openDB();   // 🔥 REQUIRED FIRST
+
   setupBindings();
   setupImageUpload();
   setupTypeSelector();
   setupRaritySelector();
   setupFormToggle();
   setupExportButton();
-  setupImportJson();   // 🔹 NEW
+  setupImportJson();
+  setupSaveToGallery();
+  loadFromGalleryByIdIfPresent();
+  setupNewCardButton();
 });
