@@ -5,6 +5,10 @@ function escapeHtml(str) {
     .replace(/>/g, "&");
 }
 
+document.getElementById("openGalleryBtn").addEventListener("click", () => {
+  window.location.href = "gallery.html";
+});
+
 // Make everything between " " blue using .category-name
 function formatQuotedText(text) {
   const escaped = escapeHtml(text);
