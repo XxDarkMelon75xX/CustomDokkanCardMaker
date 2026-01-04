@@ -13,6 +13,47 @@
   </header>
 
   <main>
+    <section class="filters">
+      <div class="filter-row">
+        <label>
+          Type:
+          <select id="filterType">
+            <option value="ALL">All</option>
+            <option value="AGL">AGL</option>
+            <option value="TEQ">TEQ</option>
+            <option value="INT">INT</option>
+            <option value="STR">STR</option>
+            <option value="PHY">PHY</option>
+          </select>
+        </label>
+
+        <label>
+          Class:
+          <select id="filterAlign">
+            <option value="ALL">All</option>
+            <option value="SUPER">Super</option>
+            <option value="EXTREME">Extreme</option>
+          </select>
+        </label>
+
+        <button class="btn small" id="clearFiltersBtn" type="button">Clear</button>
+      </div>
+
+      <details class="category-panel" open>
+        <summary>Categories</summary>
+
+        <input
+          id="categorySearch"
+          class="category-search"
+          type="text"
+          placeholder="Search category…"
+          autocomplete="off"
+        />
+
+        <div id="categoryList" class="category-list"></div>
+      </details>
+    </section>
+
     <div id="galleryGrid" class="grid"></div>
   </main>
 
