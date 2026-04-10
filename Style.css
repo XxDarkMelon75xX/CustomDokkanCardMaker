@@ -455,6 +455,8 @@ section h3 span {
   width: 100%;
   display: flex;
   justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
   padding-top: 8px;
   padding-bottom: 8px;
 }

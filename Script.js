@@ -1,7 +1,7 @@
 function escapeHtml(str) {
   return str
     .replace(/&/g, "&")
-    .replace(/</g, "&;")
+    .replace(/</g, "&")
     .replace(/>/g, "&");
 }
 
@@ -710,7 +710,7 @@ async function loadFromGalleryByIdIfPresent() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await openDB();   // 🔥 REQUIRED FIRST
+  await openDB();
 
   setupBindings();
   setupImageUpload();
@@ -718,6 +718,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupRaritySelector();
   setupFormToggle();
   setupExportButton();
+  setupUnityExportButton(); // <-- ADD THIS HERE
   setupImportJson();
   setupSaveToGallery();
   loadFromGalleryByIdIfPresent();
