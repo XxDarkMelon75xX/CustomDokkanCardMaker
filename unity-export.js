@@ -169,8 +169,9 @@ function buildConditionObject(conditionRaw) {
   m = raw.match(/After launching (\d+) or more attacks in battle/i);
   if (m) return { type: "after_attacks_performed", minCount: Number(m[1]) };
 
-  if (/For 1 turn from the character's entry turn/i.test(raw)) {
-    return { type: "entry_turn_duration", turns: 1 };
+  m = raw.match(/For (\d+) turns? from the character's entry turn/i);
+  if (m) {
+    return { type: "entry_turn_duration", turns: Number(m[1]) };
   }
 
   m = raw.match(/Per "([^"]+)", "([^"]+)" or "([^"]+)" Category ally attacking in the same turn/i);
@@ -189,12 +190,13 @@ function buildConditionObject(conditionRaw) {
     };
   }
 
-  if (/When activating the Active Skill or when attacking with 12 Ki or more/i.test(raw)) {
+  m = raw.match(/When activating the Active Skill or when attacking with (\d+) Ki or more/i);
+  if (m) {
     return {
       type: "any_of",
       conditions: [
         { type: "on_active_skill_use" },
-        { type: "ki_threshold", minKi: 12 }
+        { type: "ki_threshold", minKi: Number(m[1]) }
       ]
     };
   }
@@ -412,6 +414,13 @@ function parseEffectLine(rawEffect, conditionObj) {
   if (/Randomly changes Ki Spheres/i.test(raw)) {
     const excludedPairs = [...raw.matchAll(/([A-Z]+)\s*&\s*([A-Z]+)/g)];
     const excludedTypes = excludedPairs.flatMap(m => [m[1], m[2]]);
+    // Also pick up single excluded types: "(TEQ excluded)", "(STR & AGL excluded)"
+    if (excludedTypes.length === 0) {
+      const singleMatches = [...raw.matchAll(/\(([A-Z]+(?:\s*&\s*[A-Z]+)*)\s+excluded\)/gi)];
+      for (const sm of singleMatches) {
+        sm[1].split(/\s*&\s*/).forEach(t => excludedTypes.push(t.trim().toUpperCase()));
+      }
+    }
     effects.push(makeEffect("orb_change_random", {
       to: "RAINBOW",
       excludedTypes
@@ -871,6 +880,14 @@ function parseActive(conditionText, effectText) {
     };
   }
 
+  m = conditionRaw.match(/there are (\d+) or more (Extreme|Super) Class allies on the team/i);
+  if (m) {
+    condition.teamClassCount = {
+      minCount: Number(m[1]),
+      classType: m[2].toLowerCase()
+    };
+  }
+
   if (/once only/i.test(conditionRaw)) {
     condition.onceOnly = true;
   }
@@ -891,6 +908,16 @@ function parseActive(conditionText, effectText) {
   if (m) {
     effects.push({ type: "stat_buff", target: "self", stats: ["atk", "def"], value: Number(m[1]), mode: "percent", scope: "battle" });
     effects.push({ type: "dodge_chance", target: "self", value: Number(m[2]), scope: "battle" });
+  } else {
+    m = effectRaw.match(/ATK & DEF \+(\d+)% in battle/i);
+    if (m) {
+      effects.push({ type: "stat_buff", target: "self", stats: ["atk", "def"], value: Number(m[1]), mode: "percent", scope: "battle" });
+    }
+  }
+
+  m = effectRaw.match(/recovers (\d+)% HP/i);
+  if (m) {
+    effects.push({ type: "heal_percent", target: "team", value: Number(m[1]), timing: "instant" });
   }
 
   const supportMatches = [...effectRaw.matchAll(/"([^"]+)" Category allies' ATK & DEF \+(\d+)%/gi)];
