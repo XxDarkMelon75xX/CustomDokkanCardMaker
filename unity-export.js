@@ -49,6 +49,7 @@ function parseKiPlus(raw) {
 
 function inferTarget(raw) {
   if (/all enemies'/i.test(raw)) return "all_enemies";
+  if (/Extreme Class allies'/i.test(raw)) return "extreme_class_allies";
   if (/Super Class allies'/i.test(raw)) return "super_class_allies";
   if (/Category allies'/i.test(raw)) return "category_allies";
   if (/all allies'/i.test(raw)) return "all_allies";
@@ -456,7 +457,7 @@ function parseEffectLine(rawEffect, conditionObj) {
   if (/\bKi\s*\+\d+/i.test(raw)) {
     const ki = parseKiPlus(raw);
     if (ki !== null) {
-      if (/all allies'|Category allies'|Super Class allies'/i.test(raw)) {
+      if (/all allies'|Category allies'|Super Class allies'|Extreme Class allies'/i.test(raw)) {
         effects.push(makeEffect("support_ki", {
           target,
           value: ki,
@@ -519,7 +520,7 @@ function parseEffectLine(rawEffect, conditionObj) {
   // for characters who also belong to the "Peppy Gals" Category
 
   const isSupportLine =
-    /all allies'|Category allies'|Super Class allies'/i.test(raw);
+    /all allies'|Category allies'|Super Class allies'|Extreme Class allies'/i.test(raw);
 
   if (isSupportLine) {
     const supportTarget = inferTarget(raw);
@@ -813,29 +814,18 @@ function parseSuperEffect(text) {
     }
   }
 
-  // Ally support from super
-  m = raw.match(/raises allies' ATK by (\d+)% for (\d+) turns?/i);
-  if (m) {
-    effects.push({
-      type: "support_buff",
-      target: "all_allies",
-      stats: ["atk"],
-      value: Number(m[1]),
-      mode: "percent",
-      turns: Number(m[2])
-    });
-  }
-
-  m = raw.match(/raises allies' DEF by (\d+)% for (\d+) turns?/i);
-  if (m) {
-    effects.push({
-      type: "support_buff",
-      target: "all_allies",
-      stats: ["def"],
-      value: Number(m[1]),
-      mode: "percent",
-      turns: Number(m[2])
-    });
+  // Ally support from super: raises [qualifier] allies' ATK/DEF/ATK & DEF by N% for N turns
+  for (const sm of [...raw.matchAll(/raises ([A-Za-z\s"'-]*allies')\s*(ATK\s*&\s*DEF|ATK|DEF)\s*by\s*(\d+)%\s*for\s*(\d+)\s*turns?/gi)]) {
+    const qualifierRaw = sm[1];
+    const statStr = sm[2].replace(/\s/g, '').toUpperCase();
+    const value = Number(sm[3]);
+    const turns = Number(sm[4]);
+    const target = /extreme\s*class/i.test(qualifierRaw) ? "extreme_class_allies"
+      : /super\s*class/i.test(qualifierRaw) ? "super_class_allies"
+      : "all_allies";
+    const stats = statStr === 'ATK&DEF' ? ['atk', 'def']
+      : statStr === 'ATK' ? ['atk'] : ['def'];
+    effects.push({ type: "support_buff", target, stats, value, mode: "percent", turns });
   }
 
   if (/high chance of stunning the enemy/i.test(raw)) {
