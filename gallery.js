@@ -1,5 +1,21 @@
 // gallery.js (IndexedDB version)
 
+// ===== TOASTS =====
+function showToast(msg, type = "success") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = "opacity 0.3s, transform 0.3s";
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(16px)";
+    setTimeout(() => toast.remove(), 320);
+  }, 3000);
+}
+
 let db = null;
 
 function openDB() {
@@ -55,12 +71,23 @@ function rarityIconPath(rarity) {
   return `img/${rarity}.png`;
 }
 
+function deleteCardFromDB(id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("cards", "readwrite");
+    const store = tx.objectStore("cards");
+    store.delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = e => reject(e);
+  });
+}
+
 let ALL_CARDS = [];
 let CATEGORY_INDEX = []; // [{key,label}]
 const state = {
   type: "ALL",
   align: "ALL",
-  rarity: "ALL",    
+  rarity: "ALL",
+  name: "",
   catSearch: "",
   selectedCats: new Set()
 };
@@ -74,26 +101,72 @@ function norm(s) {
     .replace(/\s+/g, " ");
 }
 
+// Official category list + custom additions
+const MASTER_CATEGORIES = [
+  "DB Saga", "Saiyan Saga", "Planet Namek Saga", "Androids/Cell Saga",
+  "Majin Buu Saga", "Future Saga", "Universe Survival Saga",
+  "Shadow Dragon Saga", "DAIMA",
+  "Pure Saiyans", "Hybrid Saiyans", "Earthlings", "Namekians",
+  "Androids", "Artificial Life Forms",
+  "Goku's Family", "Vegeta's Family", "Wicked Bloodline",
+  "Youth", "Peppy Gals",
+  "Super Saiyans", "Super Saiyan 2", "Super Saiyan 3",
+  "Power Beyond Super Saiyan", "Fusion", "Potara", "Fused Fighters",
+  "Giant Form", "Transformation Boost", "Power Absorption",
+  "Kamehameha", "Realm of Gods", "Full Power", "Giant Ape Power",
+  "Majin Power", "Uncontrollable Power", "Powerful Comeback",
+  "Power of Wishes", "Demonic Power", "Miraculous Awakening",
+  "Corroded Body and Mind", "Rapid Growth", "Mastered Evolution",
+  "Time Limit", "Final Trump Card",
+  "Worthy Rivals", "Sworn Enemies", "Joined Forces",
+  "Bond of Parent and Child", "Siblings' Bond", "Bond of Friendship",
+  "Bond of Master and Disciple",
+  "Ginyu Force", "Team Bardock", "Universe 6",
+  "Representatives of Universe 7", "Universe 11",
+  "GT Heroes", "GT Bosses", "Super Heroes", "Super Bosses",
+  "Movie Heroes", "Movie Bosses",
+  "Turtle School", "World Tournament", "Tournament Participants",
+  "Earth-Bred Fighters", "Low-Class Warrior", "Gifted Warriors",
+  "Otherworld Warriors", "Resurrected Warriors", "Space-Traveling Warriors",
+  "Time Travelers", "Dragon Ball Seekers", "Successors",
+  "Storied Figures", "Legendary Existence", "Saviors",
+  "Defenders of Justice", "Earth-Protecting Heroes",
+  "Revenge", "Mission Execution", "Target: Goku",
+  "Terrifying Conquerors", "Inhuman Deeds", "Planetary Destruction",
+  "Exploding Rage", "Connected Hope", "Entrusted Will",
+  "All-Out Struggle", "Battle of Wits", "Accelerated Battle",
+  "Battle of Fate", "Heavenly Events", "Special Pose",
+  "Worldwide Chaos", "Crossover", "Dragon Ball Heroes",
+  // Custom categories
+  "Hyperdimension Neptunia", "RWBY"
+];
+
+// Normalized key \u2192 canonical display name
+const MASTER_CAT_MAP = new Map(MASTER_CATEGORIES.map(c => [norm(c), c]));
+
+// Split on " - " (with spaces), newlines, or commas \u2014 NOT on bare "-"
+// so "All-Out Struggle" stays intact
 function parseCategories(text) {
   return (text || "")
-    .split(/[-\n,]/g)
+    .split(/\s+-\s+|\n|,/g)
     .map(x => x.trim())
     .filter(Boolean);
 }
 
 function buildCategoryIndex(cards) {
-  const map = new Map(); // normalized -> display label
+  const found = new Map(); // normalized key \u2192 canonical display label
 
   for (const card of cards) {
     const raw = card?.data?.binds?.categoriesText || "";
     for (const c of parseCategories(raw)) {
       const key = norm(c);
-      if (!key) continue;
-      if (!map.has(key)) map.set(key, c.trim());
+      if (!key || found.has(key)) continue;
+      // Use canonical name from master list, fall back to the card's own label
+      found.set(key, MASTER_CAT_MAP.get(key) || c.trim());
     }
   }
 
-  return Array.from(map.entries())
+  return Array.from(found.entries())
     .map(([key, label]) => ({ key, label }))
     .sort((a, b) => a.label.localeCompare(b.label, "en", { sensitivity: "base" }));
 }
@@ -138,29 +211,20 @@ function renderCategoryList() {
 }
 
 function setupFiltersUI() {
-  const typeSel = document.getElementById("filterType");
-  const alignSel = document.getElementById("filterAlign");
-  const raritySel = document.getElementById("filterRarity");
-  const clearBtn = document.getElementById("clearFiltersBtn");
-  const catSearch = document.getElementById("categorySearch");
-  
-  if (typeSel) {
-    typeSel.addEventListener("change", () => {
-      state.type = typeSel.value;
-      renderGrid();
-    });
-  }
+  const typeSel    = document.getElementById("filterType");
+  const alignSel   = document.getElementById("filterAlign");
+  const raritySel  = document.getElementById("filterRarity");
+  const nameSearch = document.getElementById("nameSearch");
+  const clearBtn   = document.getElementById("clearFiltersBtn");
+  const catSearch  = document.getElementById("categorySearch");
 
-  if (alignSel) {
-    alignSel.addEventListener("change", () => {
-      state.align = alignSel.value;
-      renderGrid();
-    });
-  }
+  if (typeSel)    typeSel.addEventListener("change",  () => { state.type  = typeSel.value;  renderGrid(); });
+  if (alignSel)   alignSel.addEventListener("change", () => { state.align = alignSel.value; renderGrid(); });
+  if (raritySel)  raritySel.addEventListener("change",() => { state.rarity= raritySel.value;renderGrid(); });
 
-  if (raritySel) {
-  raritySel.addEventListener("change", () => {
-      state.rarity = raritySel.value;
+  if (nameSearch) {
+    nameSearch.addEventListener("input", () => {
+      state.name = nameSearch.value.trim();
       renderGrid();
     });
   }
@@ -177,13 +241,15 @@ function setupFiltersUI() {
       state.type = "ALL";
       state.align = "ALL";
       state.rarity = "ALL";
+      state.name = "";
       state.catSearch = "";
       state.selectedCats.clear();
 
-      if (typeSel) typeSel.value = "ALL";
-      if (alignSel) alignSel.value = "ALL";
-      if (raritySel) raritySel.value = "ALL";
-      if (catSearch) catSearch.value = "";
+      if (typeSel)    typeSel.value = "ALL";
+      if (alignSel)   alignSel.value = "ALL";
+      if (raritySel)  raritySel.value = "ALL";
+      if (nameSearch) nameSearch.value = "";
+      if (catSearch)  catSearch.value = "";
 
       renderCategoryList();
       renderGrid();
@@ -213,6 +279,12 @@ function renderGrid() {
     if (state.type !== "ALL" && type !== state.type) return false;
     if (state.align !== "ALL" && align !== state.align) return false;
     if (state.rarity !== "ALL" && (card.rarity || "").toUpperCase() !== state.rarity) return false;
+
+    if (state.name) {
+      const q = norm(state.name);
+      const fullName = norm((card.titleMain || "") + " " + (card.titleSub || ""));
+      if (!fullName.includes(q)) return false;
+    }
 
     // AND categories
     for (const needed of state.selectedCats) {
@@ -267,6 +339,16 @@ function renderGrid() {
   // --- draw grid ---
   grid.innerHTML = "";
 
+  if (filtered.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty-msg";
+    empty.textContent = ALL_CARDS.length === 0
+      ? "No cards saved yet. Create a card in the editor and click \"Save to Gallery\"."
+      : "No cards match the current filters.";
+    grid.appendChild(empty);
+    return;
+  }
+
   for (const card of filtered) {
     const tile = document.createElement("div");
     tile.className = "tile";
@@ -293,7 +375,57 @@ function renderGrid() {
       <span class="sub">${card.titleSub || ""}</span>
     `;
 
-    tile.append(art, rarity, typeIcon, title);
+    // Hover overlay
+    const overlay = document.createElement("div");
+    overlay.className = "tile-overlay";
+    overlay.innerHTML = `
+      <span class="overlay-name">${card.titleMain || "Untitled"}</span>
+      <span class="overlay-sub">${card.titleSub || ""}</span>
+    `;
+
+    // Delete button (two-click confirm)
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "tile-delete";
+    deleteBtn.textContent = "✕";
+    deleteBtn.title = "Delete card";
+    let deleteConfirm = false;
+    let deleteTimer = null;
+
+    deleteBtn.addEventListener("click", async e => {
+      e.stopPropagation();
+      if (!deleteConfirm) {
+        deleteConfirm = true;
+        deleteBtn.textContent = "Sure?";
+        deleteBtn.classList.add("confirm");
+        deleteTimer = setTimeout(() => {
+          deleteConfirm = false;
+          deleteBtn.textContent = "✕";
+          deleteBtn.classList.remove("confirm");
+        }, 2000);
+      } else {
+        clearTimeout(deleteTimer);
+        try {
+          await deleteCardFromDB(card.id);
+          ALL_CARDS = ALL_CARDS.filter(c => c.id !== card.id);
+          CATEGORY_INDEX = buildCategoryIndex(ALL_CARDS);
+          renderCategoryList();
+          renderGrid();
+          showToast("Card deleted.", "info");
+        } catch (err) {
+          console.error(err);
+          showToast("Failed to delete card.", "error");
+        }
+      }
+    });
+
+    tile.addEventListener("mouseleave", () => {
+      clearTimeout(deleteTimer);
+      deleteConfirm = false;
+      deleteBtn.textContent = "✕";
+      deleteBtn.classList.remove("confirm");
+    });
+
+    tile.append(art, rarity, typeIcon, title, overlay, deleteBtn);
     tile.addEventListener("click", () => {
       window.location.href = `index.html?id=${encodeURIComponent(card.id)}`;
     });

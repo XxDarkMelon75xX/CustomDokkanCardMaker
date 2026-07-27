@@ -69,6 +69,7 @@ form {
   font-size: 12px;
 }
 
+
 fieldset {
   border: 1px solid #555;
   border-radius: 4px;
@@ -450,6 +451,12 @@ section h3 span {
   --main-color: #b88a20;
 }
 
+/* ===== EX SUPER ATK section (golden header to stand out) ===== */
+.card-info .ex-super-section h3 {
+  background: #7a5a00;
+  border-bottom: 1px solid #b08010;
+}
+
 /* Position the button above the card, centered, NOT inside the card */
 .export-buttons {
   width: 100%;
@@ -476,6 +483,96 @@ section h3 span {
   filter: brightness(1.1);
 }
 
+/* ===== BUTTONS ===== */
+button {
+  padding: 5px 12px;
+  font-size: 12px;
+  background: #3a3a3a;
+  color: #eee;
+  border: 1px solid #666;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover {
+  background: #4d4d4d;
+  border-color: #999;
+}
+
+/* Export buttons keep their blue style */
+.export-buttons button {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #1e40af;
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+.export-buttons button:hover {
+  background: #2563eb;
+  border-color: #1e40af;
+  filter: none;
+}
+
+/* ===== UNSAVED INDICATOR ===== */
+.unsaved-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  margin-left: 5px;
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.unsaved-dot.visible {
+  opacity: 1;
+}
+
+/* ===== TOASTS ===== */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  animation: toast-in 0.2s ease;
+  max-width: 320px;
+  pointer-events: none;
+}
+
+.toast.success { background: #166534; border-left: 4px solid #4ade80; }
+.toast.error   { background: #7f1d1d; border-left: 4px solid #f87171; }
+.toast.info    { background: #1e3a5f; border-left: 4px solid #60a5fa; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== DRAG & DROP ===== */
+.card-art.drag-over {
+  outline: 3px dashed #3b82f6;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ===== Responsive: stack on small screens ===== */
 /* Responsive: stack on small screens */
 @media (max-width: 900px) {
   .page {

@@ -23,6 +23,13 @@ body {
   font-size: 13px;
 }
 
+.empty-msg {
+  color: #aaa;
+  font-size: 1rem;
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
 .grid {
   padding: 16px;
   display: grid;
@@ -38,6 +45,79 @@ body {
   border: 3px solid #666; /* overwritten by type color */
   position: relative;
   box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.tile:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 24px rgba(0,0,0,.7);
+  z-index: 1;
+}
+
+/* Hover overlay */
+.tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.tile:hover .tile-overlay {
+  opacity: 1;
+}
+
+.overlay-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+
+.overlay-sub {
+  font-size: 11px;
+  color: #bbb;
+  text-align: center;
+}
+
+/* Delete button */
+.tile-delete {
+  position: absolute;
+  bottom: 46px;
+  right: 6px;
+  background: rgba(180,0,0,.85);
+  border: none;
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 2;
+  pointer-events: all;
+  padding: 0;
+}
+
+.tile:hover .tile-delete {
+  opacity: 1;
+}
+
+.tile-delete.confirm {
+  background: rgba(220,80,0,.95);
+  width: 40px;
+  font-size: 11px;
 }
 
 .tile img.art {
@@ -155,4 +235,46 @@ body {
 
 .category-item input {
   transform: translateY(1px);
+}
+
+/* Name search */
+.name-search {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #1b1b1b;
+  color: #eee;
+  font-size: 13px;
+  width: 180px;
+}
+
+/* Toasts */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,.5);
+  animation: toast-in 0.2s ease;
+  max-width: 300px;
+}
+
+.toast.success { background: #166534; border-left: 4px solid #4ade80; }
+.toast.error   { background: #7f1d1d; border-left: 4px solid #f87171; }
+.toast.info    { background: #1e3a5f; border-left: 4px solid #60a5fa; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
 }

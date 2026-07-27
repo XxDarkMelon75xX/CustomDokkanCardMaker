@@ -1,3 +1,79 @@
+// ===== TOASTS =====
+function showToast(msg, type = "success") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.transition = "opacity 0.3s, transform 0.3s";
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(16px)";
+    setTimeout(() => toast.remove(), 320);
+  }, 3000);
+}
+
+// ===== UNSAVED INDICATOR =====
+let _isDirty = false;
+
+function setDirty() {
+  if (_isDirty) return;
+  _isDirty = true;
+  document.getElementById("unsavedDot")?.classList.add("visible");
+}
+
+function clearDirty() {
+  _isDirty = false;
+  document.getElementById("unsavedDot")?.classList.remove("visible");
+}
+
+function setupDirtyTracking() {
+  const form = document.getElementById("cardForm");
+  if (form) {
+    form.addEventListener("input", setDirty);
+    form.addEventListener("change", setDirty);
+  }
+}
+
+// ===== DRAG & DROP =====
+function setupDragAndDrop() {
+  const artArea = document.querySelector(".card-art");
+  if (!artArea) return;
+
+  artArea.addEventListener("dragover", e => {
+    e.preventDefault();
+    artArea.classList.add("drag-over");
+  });
+
+  artArea.addEventListener("dragleave", () => {
+    artArea.classList.remove("drag-over");
+  });
+
+  artArea.addEventListener("drop", e => {
+    e.preventDefault();
+    artArea.classList.remove("drag-over");
+    const file = e.dataTransfer.files[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const isTransformed = document.querySelector(".dokkan-card")?.classList.contains("form-transformed");
+    const img = document.getElementById(isTransformed ? "cardArtImgTrans" : "cardArtImg");
+    if (!img) return;
+    const reader = new FileReader();
+    reader.onload = ev => { img.src = ev.target.result; setDirty(); };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+function setupKeyboardShortcuts() {
+  document.addEventListener("keydown", e => {
+    if (e.ctrlKey && e.key === "s") {
+      e.preventDefault();
+      document.getElementById("saveToGalleryBtn")?.click();
+    }
+  });
+}
+
 function escapeHtml(str) {
   return str
     .replace(/&/g, "&")
@@ -212,14 +288,19 @@ function setupBindings() {
         // simple quoted text (no icons)
         target.innerHTML = formatQuotedText(value);
       }
-      else if (id === "activeText" || id === "activeCond") {
-        // Active Skill condition + effect: quotes + icons
+      else if (
+        id === "activeText"  || id === "activeCond"  ||
+        id === "t_activeText"|| id === "t_activeCond"||
+        id === "exSAEffect"  || id === "exSACond"    ||
+        id === "t_exSAEffect"|| id === "t_exSACond"
+      ) {
+        // Active / EX SA condition + effect: quotes + icons
         target.innerHTML = formatPassiveInline(value);
       }
       else if (id === "passiveText" || id === "t_passiveText") {
         target.innerHTML = formatPassiveText(value);
       }
-      else if (id === "linksText") {
+      else if (id === "linksText" || id === "linksTextA" || id === "linksTextB") {
         target.innerHTML = formatLinks(value);
       }
       else if (id === "categoriesText") {
@@ -238,24 +319,25 @@ function setupBindings() {
 // Simple image preview from file input
 function setupImageUpload() {
   const setups = [
-    { inputId: "artInput", imgId: "cardArtImg" },
-    { inputId: "artInputTrans", imgId: "cardArtImgTrans" }
+    { inputId: "artInput",      imgId: "cardArtImg",      btnId: "loadImageBtn" },
+    { inputId: "artInputTrans", imgId: "cardArtImgTrans",  btnId: "loadImageTransBtn" }
   ];
 
-  setups.forEach(({ inputId, imgId }) => {
+  setups.forEach(({ inputId, imgId, btnId }) => {
     const fileInput = document.getElementById(inputId);
     const img = document.getElementById(imgId);
+    const btn = document.getElementById(btnId);
 
     if (!fileInput || !img) return;
+
+    if (btn) btn.addEventListener("click", () => fileInput.click());
 
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = e => {
-        img.src = e.target.result;
-      };
+      reader.onload = e => { img.src = e.target.result; };
       reader.readAsDataURL(file);
     });
   });
@@ -342,7 +424,11 @@ function setupFormToggle() {
   if (!card || !formRoot || !radios.length || !transformCheckbox) return;
 
   const apply = () => {
-    const enabled = transformCheckbox.checked;
+    const exchangeCheckbox = document.getElementById("hasReversibleExchange");
+    const standbyCheckbox  = document.getElementById("hasStandby");
+    const isExchange = exchangeCheckbox?.checked ?? false;
+    const isStandby  = standbyCheckbox?.checked  ?? false;
+    const enabled = transformCheckbox.checked || isExchange || isStandby;
 
     // Show/hide the "Form preview" fieldset
     if (toggleGroup) {
@@ -382,12 +468,139 @@ function setupFormToggle() {
       // transformed fields only when transformation is enabled AND mode === "transformed"
       el.style.display = (enabled && mode === "transformed") ? "" : "none";
     });
+
+    // Exchange: title + links preview visibility per partner
+    if (isExchange) {
+      const isBase = (!enabled || mode === "base");
+      document.getElementById("titleMainA")?.style.setProperty("display", isBase ? "" : "none");
+      document.getElementById("titleSubA") ?.style.setProperty("display", isBase ? "" : "none");
+      document.getElementById("titleMainB")?.style.setProperty("display", isBase ? "none" : "");
+      document.getElementById("titleSubB") ?.style.setProperty("display", isBase ? "none" : "");
+
+      const linksTextA = document.getElementById("linksTextA");
+      const linksTextB = document.getElementById("linksTextB");
+      if (linksTextA) linksTextA.style.display = isBase ? "" : "none";
+      if (linksTextB) linksTextB.style.display = isBase ? "none" : "";
+    }
   };
 
   radios.forEach(r => r.addEventListener("change", apply));
   transformCheckbox.addEventListener("change", apply);
 
+  const exchangeCheckbox = document.getElementById("hasReversibleExchange");
+  if (exchangeCheckbox) exchangeCheckbox.addEventListener("change", apply);
+  const standbyCheckbox = document.getElementById("hasStandby");
+  if (standbyCheckbox) standbyCheckbox.addEventListener("change", apply);
+
   apply(); // initial state
+}
+
+function setupReversibleExchange() {
+  const checkbox = document.getElementById("hasReversibleExchange");
+  if (!checkbox) return;
+
+  const apply = () => {
+    const isExchange = checkbox.checked;
+
+    // Update form toggle labels
+    const legend = document.getElementById("formToggleLegend");
+    const labelBase = document.getElementById("formLabelBase");
+    const labelTrans = document.getElementById("formLabelTransformed");
+    if (legend)     legend.textContent      = isExchange ? "Exchange preview"  : "Form preview";
+    if (labelBase)  labelBase.textContent   = isExchange ? "Partner A"         : "Base form";
+    if (labelTrans) labelTrans.textContent  = isExchange ? "Partner B"         : "Transformed form";
+
+    // Toggle title fields in form
+    const titleSharedGroup   = document.getElementById("titleSharedGroup");
+    const titleExchangeGroup = document.getElementById("titleExchangeGroup");
+    if (titleSharedGroup)   titleSharedGroup.style.display   = isExchange ? "none" : "";
+    if (titleExchangeGroup) titleExchangeGroup.style.display = isExchange ? ""     : "none";
+
+    // Toggle shared title in preview
+    const titleMain = document.getElementById("titleMain");
+    const titleSub  = document.getElementById("titleSub");
+    if (titleMain) titleMain.style.display = isExchange ? "none" : "";
+    if (titleSub)  titleSub.style.display  = isExchange ? "none" : "";
+
+    // If exchange is turned off, hide exchange preview titles
+    if (!isExchange) {
+      ["titleMainA","titleSubA","titleMainB","titleSubB"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+      });
+    }
+
+    // Toggle links in form
+    const linksSharedGroup   = document.getElementById("linksSharedGroup");
+    const linksExchangeGroup = document.getElementById("linksExchangeGroup");
+    if (linksSharedGroup)   linksSharedGroup.style.display   = isExchange ? "none" : "";
+    if (linksExchangeGroup) linksExchangeGroup.style.display = isExchange ? ""     : "none";
+
+    // Toggle shared links in preview
+    const linksText = document.getElementById("linksText");
+    if (linksText) linksText.style.display = isExchange ? "none" : "";
+
+    // If exchange is turned off, hide exchange preview links
+    if (!isExchange) {
+      const linksTextA = document.getElementById("linksTextA");
+      const linksTextB = document.getElementById("linksTextB");
+      if (linksTextA) linksTextA.style.display = "none";
+      if (linksTextB) linksTextB.style.display = "none";
+    }
+  };
+
+  checkbox.addEventListener("change", apply);
+  apply();
+}
+
+function setupStandbySkill() {
+  const checkbox = document.getElementById("hasStandby");
+  if (!checkbox) return;
+
+  const apply = () => {
+    const isStandby = checkbox.checked;
+
+    // Labels
+    const legend    = document.getElementById("formToggleLegend");
+    const labelBase = document.getElementById("formLabelBase");
+    const labelTrans= document.getElementById("formLabelTransformed");
+    if (!document.getElementById("hasReversibleExchange")?.checked) {
+      if (legend)     legend.textContent     = isStandby ? "Standby preview"  : "Form preview";
+      if (labelBase)  labelBase.textContent  = isStandby ? "Normal"           : "Base form";
+      if (labelTrans) labelTrans.textContent = isStandby ? "Standby mode"     : "Transformed form";
+    }
+
+    // Standby fields in form
+    const standbyFields = document.getElementById("standbyFields");
+    if (standbyFields) standbyFields.style.display = isStandby ? "" : "none";
+
+    // Standby section in preview
+    const standbySection = document.getElementById("standbySection");
+    if (standbySection) standbySection.style.display = isStandby ? "" : "none";
+
+    // Rename the "Load Transformed Image" button
+    const loadTransBtn = document.getElementById("loadImageTransBtn");
+    if (loadTransBtn) loadTransBtn.textContent = isStandby ? "Load Standby Image" : "Load Transformed Image";
+  };
+
+  checkbox.addEventListener("change", apply);
+  apply();
+}
+
+function setupExSA() {
+  const checkbox = document.getElementById("hasExSA");
+  if (!checkbox) return;
+
+  const apply = () => {
+    const on = checkbox.checked;
+    const fields  = document.getElementById("exSAFields");
+    const section = document.getElementById("exSASection");
+    if (fields)  fields.style.display  = on ? "" : "none";
+    if (section) section.style.display = on ? "" : "none";
+  };
+
+  checkbox.addEventListener("change", apply);
+  apply();
 }
 
 // Insert helper tags into the active textarea/input
@@ -484,7 +697,7 @@ function setupExportButton() {
 
     } catch (err) {
       console.error("Export failed:", err);
-      alert("PNG/JSON export failed. Check the console for details.");
+      showToast("PNG/JSON export failed. Check the console.", "error");
     }
   });
 }
@@ -526,6 +739,9 @@ function collectCardData() {
     type: null,
     hasTransform: false,
     hasActiveSkill: true,
+    hasReversibleExchange: false,
+    hasStandby: false,
+    hasExSA: false,
     formMode: "base"
   };
 
@@ -550,6 +766,16 @@ function collectCardData() {
   // Active Skill toggle
   const hasActiveSkill = document.getElementById("hasActiveSkill");
   if (hasActiveSkill) data.hasActiveSkill = !!hasActiveSkill.checked;
+
+  // Reversible Exchange toggle
+  const hasReversibleExchange = document.getElementById("hasReversibleExchange");
+  if (hasReversibleExchange) data.hasReversibleExchange = !!hasReversibleExchange.checked;
+
+  const hasStandby = document.getElementById("hasStandby");
+  if (hasStandby) data.hasStandby = !!hasStandby.checked;
+
+  const hasExSA = document.getElementById("hasExSA");
+  if (hasExSA) data.hasExSA = !!hasExSA.checked;
 
   // Current form mode (base / transformed)
   const fm = document.querySelector('input[name="formMode"]:checked');
@@ -589,6 +815,31 @@ function applyCardData(data) {
     if (hasActiveSkill) {
       hasActiveSkill.checked = data.hasActiveSkill;
       hasActiveSkill.dispatchEvent(new Event("change"));
+    }
+  }
+
+  // Reversible Exchange toggle
+  if (typeof data.hasReversibleExchange === "boolean") {
+    const hasReversibleExchange = document.getElementById("hasReversibleExchange");
+    if (hasReversibleExchange) {
+      hasReversibleExchange.checked = data.hasReversibleExchange;
+      hasReversibleExchange.dispatchEvent(new Event("change"));
+    }
+  }
+
+  if (typeof data.hasStandby === "boolean") {
+    const hasStandby = document.getElementById("hasStandby");
+    if (hasStandby) {
+      hasStandby.checked = data.hasStandby;
+      hasStandby.dispatchEvent(new Event("change"));
+    }
+  }
+
+  if (typeof data.hasExSA === "boolean") {
+    const hasExSA = document.getElementById("hasExSA");
+    if (hasExSA) {
+      hasExSA.checked = data.hasExSA;
+      hasExSA.dispatchEvent(new Event("change"));
     }
   }
 
@@ -647,7 +898,7 @@ function setupImportJson() {
         applyCardData(data);
       } catch (err) {
         console.error("Invalid JSON file:", err);
-        alert("Invalid JSON file.");
+        showToast("Invalid JSON file.", "error");
       }
     };
     reader.readAsText(file);
@@ -659,37 +910,57 @@ function setupSaveToGallery() {
   if (!btn) return;
 
   btn.addEventListener("click", async () => {
-  const data = collectCardData();
-  const titleMain = document.getElementById("titleMain").textContent;
-  const titleSub = document.getElementById("titleSub").textContent;
-  const rarity = document.getElementById("raritySelect")?.value;
-  const type = document.getElementById("typeSelect")?.value;
-  const hasTransform = document.getElementById("hasTransform")?.checked;
+    try {
+      const data = collectCardData();
+      const titleMain = document.getElementById("titleMain").textContent;
+      const titleSub = document.getElementById("titleSub").textContent;
+      const rarity = document.getElementById("raritySelect")?.value;
+      const type = document.getElementById("typeSelect")?.value;
+      const hasTransform = document.getElementById("hasTransform")?.checked;
 
-  const artImg = document.getElementById("cardArtImg");
-  const artBlob = await fetch(artImg.src).then(r => r.blob());
+      const artImg = document.getElementById("cardArtImg");
+      let artBlob = null;
+      try {
+        artBlob = await fetch(artImg.src).then(r => r.blob());
+      } catch (e) {
+        console.warn("Could not fetch card art, saving without image:", e);
+      }
 
-  const url = new URL(window.location.href);
-  let id = url.searchParams.get("id");
-  if (!id) {
-    id = "c_" + Date.now() + "_" + Math.random().toString(16).slice(2);
-    url.searchParams.set("id", id);
-    window.history.replaceState({}, "", url.toString());
-  }
+      const artImgTrans = document.getElementById("cardArtImgTrans");
+      let artBlobTrans = null;
+      try {
+        artBlobTrans = await fetch(artImgTrans.src).then(r => r.blob());
+      } catch (e) {
+        console.warn("Could not fetch transformed art, saving without image:", e);
+      }
 
-  await saveCardToDB({
-    id,
-    titleMain,
-    titleSub,
-    rarity,
-    type,
-    hasTransform,
-    artBlob,
-    data,
-    updatedAt: Date.now()
-  });
+      const url = new URL(window.location.href);
+      let id = url.searchParams.get("id");
+      if (!id) {
+        id = "c_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+        url.searchParams.set("id", id);
+        window.history.replaceState({}, "", url.toString());
+      }
 
-  alert("Saved to gallery!");
+      await saveCardToDB({
+        id,
+        titleMain,
+        titleSub,
+        rarity,
+        type,
+        hasTransform,
+        artBlob,
+        artBlobTrans,
+        data,
+        updatedAt: Date.now()
+      });
+
+      clearDirty();
+      showToast("Saved to gallery!");
+    } catch (e) {
+      console.error("Save to gallery failed:", e);
+      showToast("Save failed: " + e.message, "error");
+    }
   });
 }
 
@@ -707,6 +978,11 @@ async function loadFromGalleryByIdIfPresent() {
     const imgURL = URL.createObjectURL(card.artBlob);
     document.getElementById("cardArtImg").src = imgURL;
   }
+
+  if (card.artBlobTrans) {
+    const imgURL = URL.createObjectURL(card.artBlobTrans);
+    document.getElementById("cardArtImgTrans").src = imgURL;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -717,10 +993,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupTypeSelector();
   setupRaritySelector();
   setupFormToggle();
+  setupReversibleExchange();
+  setupStandbySkill();
+  setupExSA();
   setupExportButton();
-  setupUnityExportButton(); // <-- ADD THIS HERE
+  setupUnityExportButton();
   setupImportJson();
   setupSaveToGallery();
   loadFromGalleryByIdIfPresent();
   setupNewCardButton();
+  setupDirtyTracking();
+  setupDragAndDrop();
+  setupKeyboardShortcuts();
 });

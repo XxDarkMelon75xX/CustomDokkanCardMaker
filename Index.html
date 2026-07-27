@@ -14,7 +14,7 @@
     <form id="cardForm">
       <fieldset>
         <legend>Gallery</legend>
-        <button type="button" id="saveToGalleryBtn">Save to Gallery</button>
+        <button type="button" id="saveToGalleryBtn">Save to Gallery <span class="unsaved-dot" id="unsavedDot"></span></button>
         <button type="button" id="newCardBtn">New Card</button>
         <button id="openGalleryBtn" class="btn" type="button">Open Gallery</button>
       </fieldset>
@@ -22,6 +22,10 @@
         <legend>Save / Load</legend>
         <button type="button" id="importJsonBtn">Load JSON</button>
         <input type="file" id="importJsonFile" accept="application/json" style="display:none">
+        <button type="button" id="loadImageBtn" data-form="base">Load Image</button>
+        <input type="file" id="artInput" accept="image/*" style="display:none">
+        <button type="button" id="loadImageTransBtn" data-form="transformed">Load Transformed Image</button>
+        <input type="file" id="artInputTrans" accept="image/*" style="display:none">
       </fieldset>
       <fieldset>
         <legend>Active Skill Info</legend>
@@ -33,31 +37,67 @@
           <input type="checkbox" id="hasActiveSkill" checked>
           This card has an Active Skill
         </label>
+        <label>
+          <input type="checkbox" id="hasReversibleExchange">
+          This card has a Reversible Exchange
+        </label>
+        <label>
+          <input type="checkbox" id="hasStandby">
+          This card has a Standby Skill
+        </label>
+        <label>
+          <input type="checkbox" id="hasExSA">
+          This card has an EX Super Attack
+        </label>
       </fieldset>
 
       <fieldset id="formToggleGroup">
-        <legend>Form preview</legend>
+        <legend id="formToggleLegend">Form preview</legend>
         <label>
           <input type="radio" name="formMode" value="base" checked>
-          Base form
+          <span id="formLabelBase">Base form</span>
         </label>
         <br>
         <label>
           <input type="radio" name="formMode" value="transformed">
-          Transformed form
+          <span id="formLabelTransformed">Transformed form</span>
         </label>
       </fieldset>
 
       <fieldset>
         <legend>General</legend>
-        <label>
-          Title line 1:
-          <input type="text" data-bind="titleMain" value="Goddess of Lowee">
-        </label>
-        <label>
-          Title line 2:
-          <input type="text" data-bind="titleSub" value="Blanc">
-        </label>
+        <div id="titleSharedGroup">
+          <label>
+            Title line 1:
+            <input type="text" data-bind="titleMain" value="Goddess of Lowee">
+          </label>
+          <label>
+            Title line 2:
+            <input type="text" data-bind="titleSub" value="Blanc">
+          </label>
+        </div>
+        <div id="titleExchangeGroup" style="display:none">
+          <div data-form="base">
+            <label>
+              Partner A – Title line 1:
+              <input type="text" data-bind="titleMainA" value="Son Goku">
+            </label>
+            <label>
+              Partner A – Title line 2:
+              <input type="text" data-bind="titleSubA" value="Super Saiyan">
+            </label>
+          </div>
+          <div data-form="transformed">
+            <label>
+              Partner B – Title line 1:
+              <input type="text" data-bind="titleMainB" value="Vegeta">
+            </label>
+            <label>
+              Partner B – Title line 2:
+              <input type="text" data-bind="titleSubB" value="Super Saiyan (Angel)">
+            </label>
+          </div>
+        </div>
         <label>
           Type:
           <select id="typeSelect" data-bind="type">
@@ -109,6 +149,25 @@
           <textarea rows="2" data-bind="leaderText">"Hyperdimension Neptunia" Category Ki +3 and HP, ATK &amp; DEF +150%.</textarea>
         </label>
 
+        <div id="standbyFields" style="display:none">
+          <label>
+            Entry condition:
+            <textarea rows="2" data-bind="standbyCond">Can be activated from the 3rd turn onward.</textarea>
+          </label>
+          <label>
+            Duration (turns in Standby mode):
+            <input type="number" data-bind="standbyDuration" value="2">
+          </label>
+          <label>
+            Exit condition:
+            <textarea rows="2" data-bind="standbyExitCond">Collect 7 or more Ki Spheres.</textarea>
+          </label>
+          <label>
+            Standby effect:
+            <textarea rows="3" data-bind="standbyEffect">Causes mega-colossal damage to all enemies and greatly raises ATK for 3 turns.</textarea>
+          </label>
+        </div>
+
         <div data-form="base">
         <label>
           Super ATK name:
@@ -135,6 +194,38 @@
         Greatly raises ATK &amp; DEF for 1 turn and causes immense damage.
           </textarea>
         </label>
+        </div>
+
+        <!-- EX Super ATK -->
+        <div id="exSAFields" style="display:none">
+          <div data-form="base">
+            <label>
+              EX Super ATK name:
+              <input type="text" data-bind="exSAName" value="Final Flash EX">
+            </label>
+            <label>
+              EX Super ATK condition:
+              <textarea rows="2" data-bind="exSACond">If a Super ATK is launched during a chain attack, there is a 50% chance of it becoming an EX Super ATK.</textarea>
+            </label>
+            <label>
+              EX Super ATK effect:
+              <textarea rows="3" data-bind="exSAEffect">Greatly raises ATK &amp; DEF for 1 turn and causes mega-colossal damage.</textarea>
+            </label>
+          </div>
+          <div data-form="transformed">
+            <label>
+              Transformed EX Super ATK name:
+              <input type="text" data-bind="t_exSAName" value="Final Flash EX (HDD)">
+            </label>
+            <label>
+              Transformed EX Super ATK condition:
+              <textarea rows="2" data-bind="t_exSACond">If a Super ATK is launched during a chain attack, there is a 50% chance of it becoming an EX Super ATK.</textarea>
+            </label>
+            <label>
+              Transformed EX Super ATK effect:
+              <textarea rows="3" data-bind="t_exSAEffect">Raises ATK &amp; DEF for 1 turn and causes mega-colossal damage to all enemies.</textarea>
+            </label>
+          </div>
         </div>
 
         <!-- Ultra Super ATK (LR only, both forms inside this group) -->
@@ -247,10 +338,26 @@
           </label>
         </div>
 
-        <label>
-          Links:
-          <textarea rows="3" data-bind="linksText">Buttiful Diva - Neptunia - etc.</textarea>
-        </label>
+        <div id="linksSharedGroup">
+          <label>
+            Links:
+            <textarea rows="3" data-bind="linksText">Buttiful Diva - Neptunia - etc.</textarea>
+          </label>
+        </div>
+        <div id="linksExchangeGroup" style="display:none">
+          <div data-form="base">
+            <label>
+              Partner A – Links:
+              <textarea rows="3" data-bind="linksTextA">Buttiful Diva - Neptunia - etc.</textarea>
+            </label>
+          </div>
+          <div data-form="transformed">
+            <label>
+              Partner B – Links:
+              <textarea rows="3" data-bind="linksTextB">Legendary Power - Prepared for Battle - etc.</textarea>
+            </label>
+          </div>
+        </div>
 
         <label>
           Categories:
@@ -288,22 +395,6 @@
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Artwork</legend>
-        <div data-form="base">
-        <label>
-          Upload card image:
-          <input type="file" id="artInput" accept="image/*">
-        </label>
-        </div>
-      
-        <div data-form="transformed">
-        <label>
-          Upload transformed image:
-          <input type="file" id="artInputTrans" accept="image/*">
-        </label>
-        </div>
-      </fieldset>
 
       <fieldset class="helper-panel">
         <legend>Syntax helper</legend>
@@ -359,6 +450,10 @@
         <div class="card-header">
           <div class="header-title" id="titleMain">Goddess of Lowee</div>
           <div class="header-subtitle" id="titleSub">Blanc</div>
+          <div class="header-title" id="titleMainA" style="display:none"></div>
+          <div class="header-subtitle" id="titleSubA" style="display:none"></div>
+          <div class="header-title" id="titleMainB" style="display:none"></div>
+          <div class="header-subtitle" id="titleSubB" style="display:none"></div>
         </div>
 
         <!-- TOP INFO BAR -->
@@ -431,6 +526,22 @@
             </p>
           </section>
 
+          <section id="exSASection" class="ex-super-section" style="display:none">
+            <h3>
+              EX Super ATK
+              <span id="exSAName" data-form="base">Final Flash EX</span>
+              <span id="t_exSAName" data-form="transformed">Final Flash EX (HDD)</span>
+            </h3>
+            <p>
+              <strong>Condition:</strong>
+              <span id="exSACond" data-form="base">...</span>
+              <span id="t_exSACond" data-form="transformed">...</span>
+            </p>
+            <p>
+              <span id="exSAEffect" data-form="base">...</span>
+              <span id="t_exSAEffect" data-form="transformed">...</span>
+            </p>
+          </section>
 
           <section>
             <h3>
@@ -460,11 +571,19 @@
             </p>
           </section>
 
+          <section id="standbySection" style="display:none">
+            <h3>Standby Skill</h3>
+            <p><strong>Activation:</strong> <span id="standbyCond"></span></p>
+            <p><strong>Duration:</strong> <span id="standbyDuration"></span> turn(s) in Standby mode</p>
+            <p><strong>Exit condition:</strong> <span id="standbyExitCond"></span></p>
+            <p><strong>Effect:</strong> <span id="standbyEffect"></span></p>
+          </section>
+
           <section>
             <h3>Links</h3>
-            <p id="linksText">
-              Buttiful Diva - Neptunia - etc.
-            </p>
+            <p id="linksText">Buttiful Diva - Neptunia - etc.</p>
+            <p id="linksTextA" style="display:none"></p>
+            <p id="linksTextB" style="display:none"></p>
           </section>
 
           <section>
@@ -514,6 +633,7 @@
   </div> <!-- .preview-inner -->
 </div> <!-- .preview-panel -->
 
+<div id="toast-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="unity-export.js"></script>
 <script src="script.js"></script>
